@@ -812,7 +812,7 @@ _Parameter _BayesianGraphicalModel::ImputeNodeScore (long node_id, _SimpleList &
     checkParameter (_HYBgm_IMPUTE_BURNIN, impute_burnin, 0);
     checkParameter (_HYBgm_IMPUTE_SAMPLES, impute_samples, 0);
 
-    if (impute_maxsteps <= 0 || impute_burnin <= 0 || impute_samples <= 0 || impute_samples > impute_maxsteps) {
+    if (impute_maxsteps <= 0 || impute_burnin < 0 || impute_samples <= 0 || impute_samples > impute_maxsteps) {
         WarnError (_String("ERROR: Invalid IMPUTE setting(s) in ImputeNodeScore()"));
         return 0.;
     }
@@ -866,6 +866,7 @@ _Parameter _BayesianGraphicalModel::ImputeNodeScore (long node_id, _SimpleList &
 
     // for discrete nodes, the j-th column tallies the number of observed instances of j-th level
     // for continuous nodes, store summary statistics (mean, variance, sample size)
+	// therefore, the minimum number of columns is 3
     CreateMatrix (&observed_values, family_size, (max_num_levels > 3) ? max_num_levels : 3, false, true, false);
 
 
@@ -873,9 +874,10 @@ _Parameter _BayesianGraphicalModel::ImputeNodeScore (long node_id, _SimpleList &
     // make deep copy, annotate which entries are missing, and tally observed states
     for (long pa_index, row = 0; row < theData.GetHDim(); row++) {
         pa_index    = 0;
-        child_state = theData (row, node_id);
-
-        data_deep_copy.Store (row, 0, child_state); // first entry in row always stores child state
+		
+		/* this part is redundant!  see for loop below  -- afyp, October 26, 2011  */
+        //child_state = theData (row, node_id);
+        //data_deep_copy.Store (row, 0, child_state); // first entry in row always stores child state
 
         // findex = family-wise index
         for (long fnode, fstate, findex = 0; findex < family_size; findex++) {

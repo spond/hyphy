@@ -55,7 +55,8 @@ _String     _HYBgm_NODE_INDEX   ("NodeID"),
 //__________________________________________________________________________________________________________
 #ifdef      __UNIX__
 
-void        ConsoleBGMStatus (_String, _Parameter, _String * fileName = nil);
+/* I have no idea why but this line is causing my compiler to barf :-P  afyp October 27, 2011 */
+//void        ConsoleBGMStatus (_String, _Parameter, _String * fileName = nil);
 
 
 void        ConsoleBGMStatus (_String statusLine, _Parameter percentDone, _String * fileName = nil)
@@ -2016,30 +2017,26 @@ void    _BayesianGraphicalModel::GraphMetropolis (bool fixed_order, long mcmc_bu
 
 
     // initialize chain state
-    if (node_order_arg.lLength == 0) {
-        if (fixed_order) {
-            _String oops ("ERROR: Missing node order when attempting structural-MCMC with fixed order argument.");
-            WarnError (oops);
-            return;
-        } else {    // node order argument has not been set by user
-            (*proposed_graph)   = (_Matrix &) theStructure;
-            proposed_order      = GetOrderFromGraph (theStructure);
-            ReportWarning (_String("Starting GraphMetropolis() without node_order_arg, extracted ") & (_String *) proposed_order->toStr() & " from theStructure");
-        }
-    } else {    // set to user arguments
-        if (GraphObeysOrder (theStructure, node_order_arg)) {
-            (*proposed_graph) = (_Matrix &) theStructure;
+	if (fixed_order)
+	{
+		if (node_order_arg.lLength > 0 && GraphObeysOrder (theStructure, node_order_arg) )
+		{
+			(*proposed_graph) = (_Matrix &) theStructure;
             (*proposed_order) = (_SimpleList &) node_order_arg;
-
+			
             ReportWarning (_String ("Starting GraphMetropolis() using node_order_arg:\n ") & (_String *) proposed_order->toStr());
-        } else {
-            _String oops ("ERROR: Structure does not match order, aborting GraphMetropolis().");
+		}
+		else
+		{
+			_String oops ("ERROR: Structure does not match order, aborting GraphMetropolis().");
             WarnError (oops);
-
+			
             return;
-        }
-    }
-
+		}
+	} else {
+		(*proposed_graph)   = (_Matrix &) theStructure;
+		proposed_order      = GetOrderFromGraph (theStructure);
+	}
 
 
 
