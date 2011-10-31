@@ -1,0 +1,60 @@
+\documentclass[12pt]{book}
+
+%\linespread{1.6}
+\usepackage{times}
+\usepackage[margin=1in]{geometry}
+\usepackage[round,sort&compress,numbers]{natbib}
+%\newcommand{\citenumfont}{\textit}
+
+%\usepackage{fancyhdr}
+%\pagestyle{fancy}
+%\renewcommand{\headrulewidth}{0pt}
+%\textheight=690pt
+%\lhead{}
+%\rhead{}
+%\cfoot{}
+%\rfoot{\thepage}
+
+\usepackage[small,compact]{titlesec}
+\titleformat{\chapter}{\vspace{1in}\sf\Huge}{\thechapter} {12pt} {}
+\titleformat{\section} {\vspace{6pt}\sf\Large}{\thesection} {12pt} {}
+\titleformat{\subsection} {\vspace{4pt}\sf\large}{\thesubsection} {12pt} {}
+\titleformat{\subsubsection} {\vspace{2pt}\it}{\thesubsubsection} {12pt} {\vspace{-4pt}}
+
+
+\newcommand{\hyphy}{\textit{HyPhy }}
+
+
+\usepackage{graphicx,url}
+\usepackage{amsmath}
+
+\begin{document}
+
+\title{Advanced Molecular Evolution using {\it HyPhy}}
+\author{Sergei L.~K.~Pond, Art F.~Y.~Poon, and Spencer V.~Muse}
+\date{}
+\maketitle
+
+\chapter {Introduction}
+
+\section {What is {\it HyPhy}?}
+
+\textbf{\hyphy is a software package.}  Its name stands for `{\bf Hy}pothesis testing using {\bf Phy}logenies'.  So, the primary function of \hyphy is to analyze genetic (DNA or RNA) sequences in a phylogenetic framework.  A phylogeny is a hypothesis --- it is a tree-shaped (hierarchical) model of how sequences are descended from common ancestors.  Because of these evolutionary relationships, sequences are not independent random outcomes of molecular evolution.  Put another way, one should not get too excited about observing hundreds of sequences that all contain an `A' at position 101 because they are very probably all copies of an older sequence that contained an `A' at position 101.  If you want to test {\it any} hypothesis that involves sequence data, then you have to take the phylogeny into account.  Because of this, phylogenies are a core component of {\it HyPhy}.
+
+\textbf{\hyphy is scientific software.}  It was initially developed by Sergei Pond to clean up and extend some programs that were written by Spencer Muse.  Because \hyphy was designed to be highly customizable, it became useful to simply keep extending \hyphy as new research projects arose.  \hyphy became an open-source project under the General Public License (GPL), allowing anyone to download, use and modify the source code.  It is also distributed for free as executable binaries that are compiled for Mac OS X, Windows, and Linux.  At the time of writing this book, \hyphy has over 5000 registered users and has been cited in over 500 peer-reviewed scientific publications.  
+
+\textbf{\hyphy is as simple or as complex as you need it to be.}  It has a rich graphical user interface that can display colourful tables, charts, sequence alignments and trees; to design an analysis using a point-and-click interface; and to choose from a wide selection of packaged analyses in a standard menu.  On the other hand, \hyphy also has its own scripting language for implementing as complex an analysis as you can imagine.  It can be compiled as a shared library and loaded into another programming environment such as Python, so that it can act as a component of a bioinformatic pipeline.  It can be run in a parallel computing environment where an analysis is broken down into tasks that can be distributed among tens or hundreds of processors and run simultaneously.  
+%A wide range of cutting-edge techniques for sequence analysis have been designed and implemented in {\it HyPhy}.  
+
+For the purpose of this book, \hyphy is {\bf a scripting language for modeling molecular evolution}.  The fundamental objects of \hyphy not only include integers, matrices and associative lists, but also sequence alignments, trees, and substitution rate models.
+
+\section {Is this book for me?}
+
+This book was written for you.  You are a graduate student or post-doc who once mentioned that you wrote a program once and, as a result, you've been asked by your lab principal investigator\footnote{We know that you're not the principal investigator, because no PI would have the time to be reading this right now.} to run analysis $\mathcal{X}$ on some data.  $\mathcal{X}$ is similar to $\mathcal{Y}$, a standard analysis that has been used hundreds of times by other laboratories and is available in dozens of software packages and web applications.  
+
+But, owing to the uniqueness of the model system being studied in the lab, or the research interests of the PI, there is a significant difference that means that you can't run $\mathcal{X}$ using software designed to run $\mathcal{Y}$.  Or any software that you can find.  Just as you've resigned yourself to writing your own $\#\$!\&@$ program to implement $\mathcal{X}$, one of your colleagues mentions recently seeing a similar analysis in a paper.  After downloading and scanning over the paper, you discover two things: (1) the analysis is definitely not $\mathcal{X}$, but (2) it was done in something called {\it HyPhy}.  
+
+\hyphy enables you to do {\it anything} in the domain of phylogenetics.  This is a problem --- to borrow a popular phrase from C programming, it ``gives you enough rope to hang yourself with''.  While there is a large and growing number of biologists that use the standard analyses distributed with \hyphy or accessed as web applications on our public computing cluster ({\it Datamonkey}), 
+
+
+\end{document}
