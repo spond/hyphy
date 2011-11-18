@@ -7,6 +7,8 @@
 %\newcommand{\citenumfont}{\textit}
 \usepackage{framed}
 
+\usepackage{dingbat,phaistos,manfnt}
+
 %\usepackage{fancyhdr}
 %\pagestyle{fancy}
 %\renewcommand{\headrulewidth}{0pt}
@@ -105,7 +107,7 @@ A batch language is a collection of application-specific function calls that mak
 
 \section {Similarities to C syntax}
 
-The HBL is modeled after the programming language C.  For example:
+The HBL is modeled after the programming language C.  The following is a (non-exhaustive) list of similarities between HBL and C, for those of you that have programmed in C before and want to get a running start into coding HBL:
 
 \begin{itemize}
 \item Statements are terminated with a semi-colon (;) 
@@ -125,9 +127,9 @@ The HBL is modeled after the programming language C.  For example:
 \item Input and output are handled by functions named {\tt fscanf} and {\tt fprintf}, respectively.  However, their actual usage is differs from C (see Section \ref{io}).
 \end{itemize}
 
-\noindent This is by no means an exhaustive list of the similarities --- it is only here for readers that have programmed in C and want to get a quick start to coding in HBL.  \textbf{If you've never written a program in C, don't worry!}  We will be going over the HBL syntax for the remainder of this chapter (and a few other chapters besides).
+If you've never written a program in C, \textbf{don't worry}!  We will be going over the HBL syntax for the remainder of this chapter (and a few other chapters besides).
 
-The HBL departs substantially from the conventions of the C language in several important respects.  First of all, \hyphy\ does not explicitly distinguish between integers and floating-point numbers.  All scalar values are handled as floating-point numbers.  Consequently, the number 1 is stored internally as a floating-point number 1.0 but displayed as 1.  
+On the other hand, the HBL departs substantially from the conventions of the C language in several important respects.  First of all, \hyphy\ does not explicitly distinguish between integers and floating-point numbers.  All scalar values are handled as floating-point numbers.  Consequently, the number 1 is stored internally as a floating-point number 1.0 but displayed as 1.  
 
 Second, the HBL uses {\bf dynamic typing} of variables instead of the explicit variable declaration of C.  In other words, the type of a variable is determined by its context.  The following statement:
 
@@ -140,6 +142,10 @@ x = x + y;
 \end{leftbar}
 
 \noindent creates a floating-point variable named {\tt x} and assigns it the value 1.0, and then creates a second floating-point variable named {\tt y} and assigns it the default value of 0.  It assumes that the second variable is also floating-point because it is being added to a floating point variable.  
+
+Most importantly, HBL is truly more of a scripting language than a low-level programming language like C.  That means that it is a lot more convenient to do regular tasks.  For example, you can define a matrix without having to explicitly allocate memory to store its contents.
+
+In the following sections, we will go over the fundamental aspects of the HBL syntax.  In the interest of giving you enough information to get a quick start, and to place the application-specific components of the HBL (such as Tree) in context, we will gloss over some of the finer details --- you can find these in the comprehensive HBL reference wiki at our website, \textbf{http:// www.hyphy.org}.  
 
 
 \section {Input and Output}\label{io}
@@ -171,19 +177,67 @@ Most objects in \hyphy\ have a string representation that will get returned when
 
 The first argument identifies the {\bf stream} from which input will be read.  When {\tt stdin} (standard input) is given as the stream argument, then the \hyphy\ console window text input field is activated.  Whatever text is entered and followed by a carriage return is read by {\tt fscanf}.  More commonly, however, the first argument is an absolute or relative path to a file to be opened and read.  (The actual opening and reading all takes place behind the scenes.)  
 
-The second argument is a format string that tells \hyphy\ how to interpret (parse) the contents of each line read from the stream.  Instead of using the C placeholders, \hyphy\ instead uses one or more of the following \hyphy\ type identifiers:
+The second argument is a format string that tells \hyphy\ how to interpret (parse) the contents of each line read from the stream.  Instead of using the C placeholders, \hyphy\ instead uses a \hyphy\ type identifiers, including {\tt Number}, {\tt Matrix}, {\tt Tree}, and {\tt String} (see Section \ref{types}).  For example, it is possible to read the contents of the following line:
 
-\begin{itemize}
-\item {\tt Number} - Assigns to a floating point variable.
-\item {\tt Matrix} - Assigns to a Matrix object.
-\item {\tt Tree} - Interprets contents as a Newick tree string.  Assigns to a Tree object.
-\item {\tt String} - 
-\item Raw
-\end{itemize}
+\begin{verbatim}
+Wankel Rotary Engine,1.61803,((Human,Chimpanzee),Gorilla);
+\end{verbatim}
+
+\noindent with the following line:
+
+\begin{leftbar}
+\begin{verbatim}
+fscanf (path, "String,Number,Tree", foo, bar, baz);
+\end{verbatim}
+\end{leftbar}
+
+\noindent Now {\tt foo} is a {\tt String} object with the value ``Wankel Rotary Engine'', {\tt bar} is a {\tt Number} object with the value 1.61803, and {\tt baz} is a {\tt Tree} object with three tips.  This use of {\tt fscanf} is very useful for handling extremely large files because you can use it within a loop to iterate over successive lines in a file.
+
+\begin{framed}
+\vspace*{-1ex}
+\noindent
+\textdbend\hspace{1ex}
+\small
+\textbf{Vaara!}  The use of multiple type identifiers in a comma-delimited format string is a new feature in \hyphy\ and is not supported in versions prior to 2.0.
+\end{framed}
+
+Alternatively, the format string can be comprised of a single argument that tells \hyphy\ to read in the entire contents of a file.  {\tt Raw} redirects the entire contents of the file into a single string object.  {\tt Lines} creates a vector (matrix) whose entries correspond to lines in the file delimited by the platform-specific line-break marker.  Obviously, the latter is much more convenient but requires more memory, so you might run into trouble if you are attempting to read an extremely large file (about half a gigabyte or so).
 
 
 
-\section {Types}
+\section {Types}\label{types}
+
+\subsection {Number}
+
+All numerical values in \hyphy\ are stored internally as a double-precision floating point variable.  {\tt Number} objects can be manipulated with the usual arithmetic operators and transcendental functions:
+
+\begin{center}
+\begin{tabular}{ll}
+\hline
+Syntax & Function\\
+\hline
+{\tt x + y} & Add\\
+{\tt x - y} & Subtract\\
+{\tt x * y} & Multiply\\
+{\tt x / y} & Divide\\
+{\tt x \$ y} & Integer divide (return the integer part of the quotient)\\
+{\tt x \% y} & Modulo operator (return the remainder of the quotient)\\
+{\tt Exp(x)} & Exponential function\\
+{\tt Log(x)} & Natural logarithm\\
+{\tt Sin(x)} & Sine function (also {\tt Cos}, {\tt Tan}, {\tt Arctan})\\
+{\tt Erf(x)} & Error function, $\frac{2}{\sqrt{\pi}}\int_{0}^{x}\exp{-t^2}dt$\\
+{\tt Gamma(x)} & Gamma function, $\int_0^{\inf}t^{z-1}e^{-t}dt$\\
+\hline
+\end{tabular}
+\end{center}
+
+
+
+\subsection {String}
+
+
+
+\subsection {Matrix}
 
 
 
