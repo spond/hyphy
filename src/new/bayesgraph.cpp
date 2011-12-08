@@ -176,7 +176,7 @@ _BayesianGraphicalModel::_BayesianGraphicalModel (_AssociativeList * nodes)
 
 
     // the fundamental defining characteristic of _BayesianGraphicalModel objects
-    num_nodes           = nodes->avl.countitems(),
+    num_nodes           = nodes->avl.countitems();
 
 
     // allocate space to class matrices
@@ -332,7 +332,7 @@ _BayesianGraphicalModel::_BayesianGraphicalModel (_AssociativeList * nodes)
     _List   emptyList (global_max_parents + 1);
 
     for (long node = 0; node < num_nodes; node++) {
-        node_score_cache && (&emptyList);
+        node_score_cache && (&emptyList);	// appends a dynamic copy of _List object to start
     }
 
     scores_cached = FALSE;
@@ -346,6 +346,18 @@ _BayesianGraphicalModel::_BayesianGraphicalModel (_AssociativeList * nodes)
 _BayesianGraphicalModel::~_BayesianGraphicalModel (void)
 {
     /* destructor */
+	
+	// this is not working - crash when attempting to replace BGM object
+	
+	// we need to deallocate all those dynamic copies ( _List::makeDynamic() ) 
+	/*
+	if (node_score_cache.lLength > 0) {
+		for (long node = 0; node < num_nodes; node++) {
+			_List * this_list = (_List *) node_score_cache.lData[node];
+			delete (this_list);
+		}
+	}
+	 */
 }
 
 
@@ -2565,7 +2577,7 @@ void    _BayesianGraphicalModel::OrderMetropolis (bool do_sampling, long n_steps
 
 
     DumpMarginalVectors (marginals);
-
+	DeleteObject (marginals);
 
     /*SLKP 20070926; include progress report updates */
 #if !defined __UNIX__ || defined __HEADLESS__

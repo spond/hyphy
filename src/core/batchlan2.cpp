@@ -2268,10 +2268,20 @@ void    _ElementaryCommand::ExecuteCase64 (_ExecutionList& chain)
     chain.currentCommand++;
 #if defined __AFYP_REWRITE_BGM__
     _PMathObj   avl1    = FetchObjectFromVariableByType (&AppendContainerName(*(_String*)parameters(1),chain.nameSpacePrefix), ASSOCIATIVE_LIST);
-
+	
     if (! (avl1)) {
-        WarnError (_String ("Argument (") & *(_String*)parameters(1) & " in call to BGM = ... must evaluate to associative array");
+        WarnError (_String ("Argument (") & *(_String*)parameters(1) & " in call to BGM = ... must evaluate to associative list");
     } else {
+		// check that the keys in this AVL are numerical integers in order
+		_List * theKeys = ((_AssociativeList *) avl1) -> GetKeys();
+		
+		for (long kix = 0; kix < theKeys->lLength; kix++) {
+			if (! ((_AssociativeList *)avl1)->GetByKey(kix, ASSOCIATIVE_LIST) ) {
+				WarnError (_String ("Associative list passed to BGM must have integer keys increasing from 0, expecting key ") & kix);
+				return;
+			}
+		}
+		
         _BayesianGraphicalModel * bgm   = new _BayesianGraphicalModel ((_AssociativeList *) avl1);
 
 #else

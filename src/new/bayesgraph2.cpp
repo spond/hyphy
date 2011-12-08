@@ -568,6 +568,13 @@ _Parameter _BayesianGraphicalModel::ComputeContinuousScore (long node_id, _Simpl
                 }
             }
 
+			ReportWarning (_String("Calling BottcherScore() for node ") & node_id & ", parents " & (_String *)parents.toStr() & ", pa=" & pa);
+			ReportWarning (_String("yb=") & (_String *) yb.toStr());
+			ReportWarning (_String("zpba=") & (_String *) zbpa.toStr());
+			ReportWarning (_String("tau=") & (_String *) tau.toStr());
+			ReportWarning (_String("mu=") & (_String *) mu.toStr());
+			ReportWarning (_String("rho=") & rho);
+			
             log_score += BottcherScore (yb, zbpa, tau, mu, rho, phi, n_ij.lData[pa]);
         }
     }
@@ -614,7 +621,13 @@ _Parameter _BayesianGraphicalModel::ComputeContinuousScore (long node_id, _Simpl
             yb.Store (obs, 0, theData(obs, node_id));
         }
 
-
+		ReportWarning (_String("Calling BottcherScore() for node ") & node_id & ", no discrete parents");
+		ReportWarning (_String("yb=") & (_String *) yb.toStr());
+		ReportWarning (_String("zpba=") & (_String *) zbpa.toStr());
+		ReportWarning (_String("tau=") & (_String *) tau.toStr());
+		ReportWarning (_String("mu=") & (_String *) mu.toStr());
+		ReportWarning (_String("rho=") & rho);
+		
         log_score = BottcherScore (yb, zbpa, tau, mu, rho, phi, theData.GetHDim());
     }
 
@@ -630,7 +643,7 @@ _Parameter  _BayesianGraphicalModel::BottcherScore (_Matrix & yb, _Matrix & zbpa
 {
     /* -------------------------------------------------------------------------------
      Compute the conditional Gaussian network score of node [c] according to
-     S. Bottcher's formulation.
+     Susanne G. Bottcher's formulation.
 
      Let [y] denote the set of other continuous nodes.
      Let [i] denote the set of discrete nodes.
@@ -701,18 +714,27 @@ _Parameter  _BayesianGraphicalModel::BottcherScore (_Matrix & yb, _Matrix & zbpa
 
     temp_mat = scale;
     temp_mat *= (_Parameter) (pi_const * rho);
-
+	
+	
+	
     _AssociativeList *  eigen       = (_AssociativeList *) temp_mat.Eigensystem();
+	
+	// sometimes the eigendecomposition fails
+	if ( (eigen->GetKeys())->lLength == 0 ) {
+		WarnError (_String("Eigendecomposition failed, BottcherScore() returning large negative number as log score."));
+		return -A_LARGE_NUMBER;
+	}
+	
     _Matrix *           eigenvalues = (_Matrix *)eigen->GetByKey(0, MATRIX);
     _Parameter          log_det         = 0.;   // compute determinant on log scale to avoid overflow
-
 
     // determinant is product of eigenvalues (should be > 0 for positive definite matrices)
     for (long i = 0; i < eigenvalues->GetHDim(); i++) {
         log_det += log((*eigenvalues) (i,0));
     }
-
-    //ReportWarning (_String("det = ") & log_det);
+	
+	
+    ReportWarning (_String("log(det) = ") & log_det);
 
     // calculate first term of score
     _Parameter  pa_log_score = 0.;
@@ -735,7 +757,7 @@ _Parameter  _BayesianGraphicalModel::BottcherScore (_Matrix & yb, _Matrix & zbpa
     temp_mat *= next_mat;
     temp_mat *= (_Parameter) 1./rho;
 
-    //ReportWarning (_String ("2nd term = ") & (_Parameter) temp_mat(0,0));
+    ReportWarning (_String ("2nd term = ") & (_Parameter) temp_mat(0,0));
 
     pa_log_score += -(rho + batch_size)/2. * log(1. + temp_mat(0,0));
 
