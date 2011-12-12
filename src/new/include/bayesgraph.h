@@ -59,6 +59,7 @@
 	see Fienberg and Holland (1972) J Multivar Anal 2: 127-134.
 */
 #define     DIRICHLET_FLATTENING_CONST  0.5
+#define		MIN_SAMPLE_SIZE				5
 
 
 class _BayesianGraphicalModel : public _LikelihoodFunction
@@ -108,8 +109,8 @@ public:
                     ComputeContinuousScore (long, _SimpleList &);
 
 
-    _Parameter      ImputeNodeScore (long, _SimpleList &);	// use Gibbs sampling to compute expectation over missing data
-    														// arguments: node ID, parent ID's
+    _Parameter      ImputeDiscreteNodeScore (long, _SimpleList &),	// use Gibbs sampling to compute expectation over missing data
+    				ImputeCGNodeScore (long, _SimpleList &);		// arguments: node ID, parent ID's
 
     void            ComputeParameters (void),	// UNDER DEVELOPMENT - and I think I ended up using HBL instead
                     ComputeParameters (_Matrix *);

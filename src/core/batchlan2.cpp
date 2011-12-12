@@ -2331,7 +2331,8 @@ void    _ElementaryCommand::ExecuteCase64 (_ExecutionList& chain)
             } else {
                 // replace empty string in list
                 bgmNamesList.Replace (bgmIndex, &bgmName, true);
-                bgmList.Replace (bgmIndex, bgm, false);
+                //bgmList.Replace (bgmIndex, bgm, false);
+				bgmList.lData[bgmIndex] = (long)bgm;
             }
         } else { // 20070626: SLKP edit to deal with already existing BGMs
             bgmNamesList.Replace(bgmIndex,&bgmName,true);
