@@ -1077,7 +1077,6 @@ _Parameter _BayesianGraphicalModel::ImputeCGNodeScore (long node_id, _SimpleList
 
                     parent_state, child_state,
                     denom,
-                    this_prob,
                     // prior hyperparameters for CG nodes
                     rho = prior_sample_size (node_id, 0) > 0 ? (prior_sample_size (node_id, 0) / num_parent_combos) : 1.0,
                     phi = prior_scale (node_id, 0);
