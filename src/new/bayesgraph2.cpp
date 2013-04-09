@@ -1700,7 +1700,7 @@ _Parameter _BayesianGraphicalModel::ImputeCGNodeScore (long node_id, _SimpleList
 							zbpa.Store(0, col, previous_state);
 						}
 					}
-					data_deep_copy(row, col, current_state);
+					data_deep_copy.Store(row, col, current_state);
 				}
 			}
 		}
