@@ -951,7 +951,9 @@ _Parameter _BayesianGraphicalModel::ImputeDiscreteNodeScore (long node_id, _Simp
 			
 			reassign_probs->ZeroUsed(); // reset _GrowingVector
 			
-			if (col == 0) { // child node, reassign N_ijk's, keep N_ij's constant
+			if (col == 0) { 
+				// child node, reassign N_ijk's, keep N_ij's constant
+				// this is forward sampling
 				child_state = data_deep_copy (row, col);
 				log_score -= log(n_ijk(pa_index, child_state));
 				
@@ -986,7 +988,13 @@ _Parameter _BayesianGraphicalModel::ImputeDiscreteNodeScore (long node_id, _Simp
 					urn -= this_prob;
 				}
 				
-			} else {    // parent node, reassign both N_ij's AND N_ijk's
+			} else {    
+				/* 
+				 parent node, reassign both N_ij's AND N_ijk's
+				 
+				 this is backward sampling (see R Fung and B Del Favero UAI'94 Proceedings of the Tenth 
+				 international conference on Uncertainty in artificial intelligence), pp. 227-234.
+				 */
 				parent_state    = data_deep_copy (row, col);
 				child_state     = data_deep_copy (row, 0);
 				
@@ -1085,8 +1093,7 @@ _Parameter _BayesianGraphicalModel::ImputeCGNodeScore (long node_id, _SimpleList
                     r_i                   = num_levels.lData[node_id],	// number of levels for child node
                     max_num_levels        = r_i,
                     family_size           = parents.lLength + 1,
-                    sampling_interval,
-					batch_count;
+                    sampling_interval;
 
 
     _SimpleList     multipliers (1, 1, 0),  // length constructor, populator
@@ -1102,8 +1109,12 @@ _Parameter _BayesianGraphicalModel::ImputeCGNodeScore (long node_id, _SimpleList
                     pa_indices;				// store discrete parent combination per row
 
 
-    _Matrix         n_ijk, n_ij,        // summary statistics for discrete nodes
-                    mu, tau,            // prior hyperparameters for CG nodes
+    _Matrix         n_ijk, n_ij,			// summary statistics for discrete nodes
+	
+                    mu_prior, mu_post,		// mean, (k+1) x 1 vector (k = number of CG parents)
+					tau_prior, tau_post,	// precision, (k+1) x (k+1)
+					rho_prior, rho_post,	// degrees of freedom, scalar but use matrix for calling Random()
+					phi_prior, phi_post,	// scale matrix
 
                     data_deep_copy,     // make a deep copy of the relevant columns of the data matrix
                     observed_values;
@@ -1117,25 +1128,11 @@ _Parameter _BayesianGraphicalModel::ImputeCGNodeScore (long node_id, _SimpleList
                     impute_maxsteps, impute_burnin, impute_samples, // HBL settings
 
                     parent_state, child_state,
-                    denom,
-                    // prior hyperparameters for CG nodes
-                    rho = prior_sample_size (node_id, 0) > 0 ? (prior_sample_size (node_id, 0) / num_parent_combos) : 1.0,
-                    phi = prior_scale (node_id, 0);
+					denom;
 
 
     double          urn;            // uniform random number
 
-	
-	// parameters for CG
-	_Matrix rho_mx (1, 1, false, true);
-	rho_mx.Store(0, 0, rho);
-	ReportWarning (_String("rho_mx: ") & (_String *) rho_mx.toStr());
-	
-	_Matrix phi_mx (1, 1, false, true);
-	phi_mx.Store(0, 0, phi);
-	
-	_Matrix * iw_ptr;
-	_Parameter iw_deviate;
 	
 
     // set Gibbs sampler parameters from batch language definitions
@@ -1180,6 +1177,56 @@ _Parameter _BayesianGraphicalModel::ImputeCGNodeScore (long node_id, _SimpleList
         }
     }
 
+	// set prior hyperparameters for CG
+	
+	// prior CG mean vector
+	CreateMatrix (&mu_prior, cparents.lLength + 1, 1, false, true, false);
+	CreateMatrix (&mu_post, cparents.lLength + 1, 1, false, true, false);
+	
+	mu_prior.Store(0, 0, prior_mean (node_id, 0)); // intercept
+	
+	for (long k = 0; k < cparents.lLength; k++) {
+		mu_prior.Store(k+1, 0, 0.); // assume regression coefficients are zero
+	}
+	
+	
+	// prior precision matrix - by convention we assume a diagonal matrix
+	// and set diagonal entries to user argmument
+	CreateMatrix (&tau_prior, cparents.lLength + 1, cparents.lLength + 1, false, true, false);
+	CreateMatrix (&tau_post, cparents.lLength + 1, cparents.lLength + 1, false, true, false);
+	
+	for (long row = 0; row < cparents.lLength + 1; row++) {
+		for (long col = 0; col < cparents.lLength + 1; col++) {
+			if (row == col) {
+				tau_prior.Store (row, col, prior_precision (node_id, 0));
+			} else {
+				tau_prior.Store (row, col, 0.);
+			}
+		}
+	}
+	
+	
+	// prior degrees of freedom for Inverse Wishart, a scalar but use matrix for computation
+	CreateMatrix (&rho_prior, 1, 1, false, true, false);
+	CreateMatrix (&rho_post, 1, 1, false, true, false);
+	
+	rho_prior.Store(0, 0, prior_sample_size (node_id, 0) > 0 ? (prior_sample_size (node_id, 0) / num_parent_combos) : 1.0);
+	
+	
+	// prior scale matrix for Inverse Wishart, also conventional to assume diagonal matrix
+	CreateMatrix (&phi_prior, cparents.lLength + 1, cparents.lLength + 1, false, true, false);
+	CreateMatrix (&phi_post, cparents.lLength + 1, cparents.lLength + 1, false, true, false);
+	
+	for (long row = 0; row < cparents.lLength + 1; row++) {
+		for (long col = 0; col < cparents.lLength + 1; col++) {
+			if (row == col) {
+				phi_prior.Store (row, col, prior_scale (node_id, 0));
+			} else {
+				phi_prior.Store (row, col, 0.);
+			}
+		}
+	}
+	
 
 
     // allocate space to matrices
@@ -1326,7 +1373,7 @@ _Parameter _BayesianGraphicalModel::ImputeCGNodeScore (long node_id, _SimpleList
                 }
             }
         } else {                            // continuous node
-            data_deep_copy.Store (row, col, gaussDeviate() * observed_values(col,2) + observed_values(col,1) );
+            data_deep_copy.Store (row, col, gaussDeviate() * sqrt(observed_values(col,2)) + observed_values(col,1) );
         }
     }
 
@@ -1341,26 +1388,6 @@ _Parameter _BayesianGraphicalModel::ImputeCGNodeScore (long node_id, _SimpleList
 
 	_Matrix         log_scores_by_pa (num_parent_combos, 1, false, true),   // track separately to make updating easier
 					next_log_score_by_pa (num_parent_combos, 1, false, true);
-
-
-
-	// set mean intercept/regression coeff. hyperparameter vector for CG prior
-	CreateMatrix (&mu, k+1, 1, false, true, false);
-
-	mu.Store (0, 0, prior_mean (node_id, 0));   // intercept
-	for (long i = 1; i < k+1; i++) {
-		mu.Store (i,0,0);    // set prior expectation of regression coeffs. to 0
-	}
-
-
-	// set precision hyperparameter for CG prior
-	CreateMatrix (&tau, k+1, k+1, false, true, false);
-
-	tau.Store (0, 0, prior_precision (node_id, 0));
-	for (long i = 1; i < k+1; i++) {
-		tau.Store (i, i, prior_precision(cparents.lData[i-1],0));
-	}
-
 
 
 
@@ -1386,20 +1413,26 @@ _Parameter _BayesianGraphicalModel::ImputeCGNodeScore (long node_id, _SimpleList
 
 	// calculate CG summary statistics and compute initial scores
 	log_score = 0.;
-
+	
+	/*
+	 // caching
+	_List zbpas (num_parent_combos);
+	_List ybs (num_parent_combos);
+	 */
+	
 	for (long pa = 0; pa < num_parent_combos; pa++) {
+		
 		if (n_ij(pa,0) == 0) {
 			continue; // this batch is empty
 		}
 		
-		// these are single-use matrices, reset with every loop
-		_Matrix zbpa (n_ij(pa,0), k+1, false, true);	// (1, CG parent node values) in batch
-		_Matrix yb (n_ij(pa,0), 1, false, true);		// CG child node values in batch
+		// N-by-k+1 matrix of 1 (intercept) and continuous parents observations, given discrete parent configuration
+		_Matrix zbpa (n_ij(pa,0), k+1, false, true);
+		// vector of N observations at child node, given discrete parent combination
+		_Matrix yb (n_ij(pa,0), 1, false, true);
 		
-
-		// populate zbpa with continuous parent states
-		batch_count = 0;
-		for (long obs = 0; obs < pa_indices.lLength; obs++) {
+		// populate matrices
+		for (long batch_count = 0, obs = 0; obs < pa_indices.lLength; obs++) {
 			if (pa_indices.lData[obs] == pa) {
 				// (1, x_0, x_1, ..., x_N)
 				zbpa.Store (batch_count, 0, 1); // intercept
@@ -1415,8 +1448,13 @@ _Parameter _BayesianGraphicalModel::ImputeCGNodeScore (long node_id, _SimpleList
 				batch_count++;
 			}
 		}
-
-		log_scores_by_pa.Store (pa, 0, BottcherScore (yb, zbpa, tau, mu, rho, phi, n_ij(pa,0)));
+		
+		/*
+		// append dynamic copies of _Matrix objects to lists
+		zbpas && (&zbpa);
+		ybs && (&yb);
+		*/
+		log_scores_by_pa.Store (pa, 0, BottcherScore (yb, zbpa, tau_prior, mu_prior, rho_prior(0,0), phi_prior(0,0), n_ij(pa,0)));
 		log_score += log_scores_by_pa (pa, 0);
 	}
 
@@ -1434,208 +1472,263 @@ _Parameter _BayesianGraphicalModel::ImputeCGNodeScore (long node_id, _SimpleList
 			pa_index    = pa_indices.lData[row];
 
 
-			// if child node, then row remains in same 'pa' batch, Z^b_pa and N_ij unchanged
+			// if missing value is at child node, then row remains in same 'pa' batch, Z^b_pa and N_ij unchanged
+			// draw new state from posterior of CG node ( forward simulation )
 			if (col == 0) {
 				
-				// draw new state from posterior of CG node
-								
-				iw_ptr = (_Matrix *) phi_mx.InverseWishartDeviate (rho_mx);
-				iw_deviate = (*iw_ptr)(0,0);
-				ReportWarning(_String("sigma=") & iw_deviate);
-				
-
-				_Matrix zbpa (n_ij(pa_index,0), k+1, false, true);
-				_Matrix yb (n_ij(pa_index,0), 1, false, true);
-				
 				// collect all continuous parent states under given discrete parent combination (pa_index)
-				batch_count = 0;
-				for (long obs = 0; obs < pa_indices.lLength; obs++) {
-					if (obs == row) continue; // skip the current case
+				/*
+				_Matrix * zbpa = (_Matrix *) zbpas.lData[pa_index];
+				_Matrix * yb = (_Matrix *) ybs.lData[pa_index];
+				*/
+				
+				// note we are excluding the case with the missing value
+				_Matrix zbpa (n_ij(pa_index,0) - 1, k+1, false, true);
+				_Matrix yb (n_ij(pa_index,0) - 1, 1, false, true);
+				
+				// populate matrices
+				for (long batch_count = 0, obs = 0; obs < pa_indices.lLength; obs++) {
+					if (obs == row)
+						continue;
+					
 					if (pa_indices.lData[obs] == pa_index) {
-						zbpa.Store (batch_count, 0, 1);
+						zbpa.Store (batch_count, 0, 1); // intercept
 						for (long findex = 1; findex < family_size; findex++) {
-							if (node_type.lData[parents.lData[findex-1]] == 1) {
+							if (node_type.lData[parents.lData[findex-1]] == 1) {    // CG parent
 								zbpa.Store (batch_count, parents_by_nodetype.lData[findex-1], data_deep_copy(obs, findex));
 							}
 						}
-						yb.Store (batch_count, 0, data_deep_copy(obs, 0));
+						yb.Store (batch_count, 0, data_deep_copy(obs, 0));  // child node state
 						batch_count++;
 					}
 				}
 				
-				ReportWarning(_String("zbpa=") & (_String *) zbpa.toStr());
-				zbpa.Transpose();
-				ReportWarning(_String("zbpa=") & (_String *) zbpa.toStr());
-				zbpa *= yb;
-				ReportWarning(_String("zbpa=") & (_String *) zbpa.toStr());
+				// calculate posterior hyperparameters
+				// rho
+				rho_post.Store(0, 0, rho_prior(0,0) + zbpa.GetHDim());
 				
-
-				next_log_score_by_pa.Store (pa_index, 0, BottcherScore (yb, zbpa, tau, mu, rho, phi, (long)n_ij(pa_index,0)));
-				next_log_score  = log_score - log_scores_by_pa (pa_index, 0) + next_log_score_by_pa(pa_index, 0);
-
-				lk_ratio        = exp(log_score - next_log_score);
-
-
-				// accept this step?
-				if (lk_ratio >= 1. || genrand_real2() < lk_ratio) {
-					log_score = next_log_score;
-
-					// update log score contribution for this parent combo (pa)
-					log_scores_by_pa.Store (pa_index, 0, next_log_score_by_pa(pa_index, 0));
-				} else {
-					// revert to previous state
-					data_deep_copy.Store (row, col, child_state);
+				// tau
+				_Matrix zt (zbpa);
+				zt.Transpose();
+				zt *= zbpa; 
+				tau_post = zt;
+				
+				// mu
+				zt = zbpa;
+				zt.Transpose();
+				zt *= yb;
+				
+				_Matrix temp (tau_prior);
+				temp *= mu_prior;
+				temp += zt;
+				
+				mu_post = (_Matrix *)tau_post.Inverse();
+				mu_post *= temp;
+				
+				// phi
+				phi_post = phi_prior;
+				
+				temp = mu_prior;
+				temp -= mu_post;
+				temp.Transpose(); // in place
+				temp *= tau_prior;
+				temp *= mu_prior;
+				
+				phi_post += temp;
+				
+				temp = zbpa;
+				temp *= mu_post;
+				temp *= (_Parameter) -1.;
+				temp += yb;
+				temp.Transpose();
+				temp *= yb;
+				
+				phi_post += temp;
+				
+				ReportWarning(_String("phi_post = ") & (_String *) phi_post.toStr());
+				
+				// draw posterior distribution parameters from hyperparameters
+				_Matrix sigma = (*(_Matrix *) phi_post.InverseWishartDeviate(rho_post));
+				ReportWarning(_String("sigma = ") & (_String *) sigma.toStr());
+				
+				temp = sigma;
+				temp *= (*(_Matrix *) tau_post.Inverse());
+				
+				_Matrix coeff = *(_Matrix *)mu_post.GaussianDeviate(temp);
+				ReportWarning(_String("coeff = ") & (_String *) coeff.toStr());
+				
+				// get z_pa for this case (not batched zbpa!)
+				_Matrix covar (family_size, 1, false, true);
+				covar.Store(0, 0, 1);
+				for (long findex = 1; findex < family_size; findex++) {
+					covar.Store(findex, 0, data_deep_copy(row, findex));
 				}
+				ReportWarning(_String("covar = ") & (_String *) covar.toStr());
+				covar *= coeff;
+				
+				_Matrix res = *(_Matrix *) covar.GaussianDeviate(sigma);
+				ReportWarning(_String("result = ") & (_String *) res.toStr());
+				
+				data_deep_copy.Store(row, col, res(0,0));
 			}
-
+				
 			/* ---------- MISSING VALUE AT PARENT NODE (col > 0) ---------- */
 			else {
-				// if parent is discrete, then this case is moved to another batch (pa) -- MORE THAN ONE BATCH IS AFFECTED
 				if (node_type.lData[parents.lData[col-1]] == 0) {
+					// missing parent is discrete-valued, instantiate by backward sampling
 					
-					parent_state    = data_deep_copy (row, col);
-
-					// first compute the likelihood of the original batch minus this case
-					n_ij.Store  (pa_index, 0, n_ij(pa_index,0) - 1);
+					// what are the candidate parent combinations?
+					long			base_pa_index = 0;
+					_SimpleList		my_combos (family_nlevels.lData[col]);
 					
-					_Matrix zbpa (n_ij(pa_index,0), k+1, false, true);
-					_Matrix yb (n_ij(pa_index,0), 1, false, true);
-
-					batch_count = 0;
-					for (long obs = 0; obs < data_deep_copy.GetHDim(); obs++) {
-						if (obs == row) {
-							continue;    // skip this case
-						}
-
-						if (pa_indices.lData[obs] == pa_index) {
-							zbpa.Store (batch_count, 0, 1);
-
-							for (long findex = 1; findex < family_size; findex++) {
-								if (node_type.lData[parents.lData[findex-1]] == 1) {
-									zbpa.Store (batch_count, parents_by_nodetype.lData[findex-1], data_deep_copy(obs, findex));
-								}
-							}
-
-							yb.Store (batch_count, 0, data_deep_copy(obs, 0));
-
-							batch_count++;
+					for (long this_parent, findex = 1; findex < family_size; findex++) {
+						if (findex == col) continue;
+						this_parent = parents.lData[findex-1];
+						if (node_type.lData[this_parent] == 0) {
+							base_pa_index += data_deep_copy (row, findex) * multipliers.lData[parents_by_nodetype.lData[findex-1]];
 						}
 					}
-
-					next_log_score_by_pa.Store (pa_index, 0, BottcherScore (yb, zbpa, tau, mu, rho, phi, (long) n_ij (pa_index, 0)));
-					next_log_score = log_score - log_scores_by_pa (pa_index,0) + next_log_score_by_pa (pa_index,0);
-
-
-					// random re-assignment of discrete parent node, compute likelihood of second batch
 					
-					urn = genrand_real2() * (1.0 - observed_values(col, parent_state)); // rescale to omit original state
-
-					for (long lev = 0; lev < family_nlevels.lData[col]; lev++) {
-						if (lev == parent_state) {
+					log_score = 0; // prepare to store denominator
+					
+					for (long pa, level = 0; level < family_nlevels.lData[col]; level++) {
+						pa = base_pa_index + level * multipliers.lData[parents_by_nodetype.lData[col-1]];
+						my_combos.lData[level] = pa;
+						
+						_Matrix zbpa (n_ij(pa,0), k+1, false, true);
+						_Matrix yb (n_ij(pa,0), 1, false, true);
+						
+						for (long batch_count = 0, obs = 0; obs < pa_indices.lLength; obs++) {
+							if (obs == row) {
+								// do not include current case
+								continue;
+							}
+							if (pa_indices.lData[obs] == pa) {
+								zbpa.Store (batch_count, 0, 1); // intercept
+								for (long findex = 1; findex < family_size; findex++) {
+									if (node_type.lData[parents.lData[findex-1]] == 1) {    // CG parent
+										zbpa.Store (batch_count, parents_by_nodetype.lData[findex-1], data_deep_copy(obs, findex));
+									}
+								}
+								yb.Store (batch_count, 0, data_deep_copy(obs, 0));  // child node state
+								batch_count++;
+							}
+						}
+						
+						log_scores_by_pa.Store (pa, 0, BottcherScore (yb, zbpa, tau_prior, mu_prior, 
+																	  rho_prior(0,0), phi_prior(0,0), n_ij(pa_index,0)));
+						log_score += log_scores_by_pa (pa, 0);
+					}
+					
+					// loop over all possible discrete parent combinations
+					_Parameter this_prob = 0;
+					urn = genrand_real2();
+					
+					for (long pa, level = 0; level < family_nlevels.lData[col]; level++) {
+						pa = my_combos.lData[level];
+						if (urn < (this_prob = exp(log_scores_by_pa(pa,0) - log_score))) {
+							// impute missing value
+							data_deep_copy.Store(row, col, level);
+							
+							// update n_ij counts
+							n_ij.Store(pa_index, 0, n_ij(pa_index,0) - 1);
+							n_ij.Store(pa, 0, n_ij(pa, 0) + 1);
+							break;
+						}
+						urn -= this_prob;
+					}
+				} else {
+					/*
+					 Missing parent is continuous
+					 Use Metropolis-Hastings to get random sample from the posterior distribution, 
+						from which we can draw an instantiation
+					*/
+					
+					// note that only zbpa will change for current discrete parent combination
+					_Matrix zbpa (n_ij(pa_index,0), k+1, false, true);
+					_Matrix yb (n_ij(pa_index,0), 1, false, true);
+					
+					// make the first row = the target case
+					zbpa.Store (0, 0, 1); // intercept
+					for (long findex = 1; findex < family_size; findex++) {
+						// note missing parent indexed at col
+						if (node_type.lData[parents.lData[findex-1]] == 1) {    // CG parent
+							zbpa.Store (0, parents_by_nodetype.lData[findex-1], data_deep_copy(row, findex));
+						}
+					}
+					yb.Store (0, 0, data_deep_copy(row,0));
+					
+					for (long batch_count = 1, obs = 0; obs < pa_indices.lLength; obs++) {
+						if (obs == row) {
+							// skip the target case
 							continue;
 						}
-
-						if (urn < observed_values(col, lev)) {
-							data_deep_copy.Store (row, col, lev);
-							
-							/* BREAK */
-							
-							pa_index += (lev - parent_state) * multipliers.lData[parents_by_nodetype.lData[col-1]];
-
-
-							// compute summary stats
-							n_ij.Store  (pa_index, 0, n_ij(pa_index,0) + 1);
-							
-							_Matrix zbpa (n_ij(pa_index,0), k+1, false, true);
-							_Matrix yb (n_ij(pa_index,0), 1, false, true);
-
-							batch_count = 0;
-							
-							for (long obs = 0; obs < data_deep_copy.GetHDim(); obs++) {
-								// we won't update pa_indices[] for this case, already have pa_index to work with
-								if (obs == row || pa_indices.lData[obs] == pa_index) {
-									zbpa.Store (batch_count, 0, 1);
-
-									for (long findex = 1; findex < family_size; findex++) {
-										if (node_type.lData[parents.lData[findex-1]] == 1) {
-											zbpa.Store (batch_count, parents_by_nodetype.lData[findex-1], data_deep_copy(obs, findex));
-										}
-									}
-									yb.Store (batch_count, 0, data_deep_copy(obs, 0));
-									batch_count++;
-								}
-							}
-
-							next_log_score_by_pa.Store (pa_index, 0, BottcherScore (yb, zbpa, tau, mu, rho, phi, (long) n_ij (pa_index, 0)));
-							break;
-						} else {
-							urn -= observed_values(col, lev);
-						}
-					}
-
-					next_log_score -= log_scores_by_pa (pa_index, 0);   // remove old score for second batch
-					next_log_score += next_log_score_by_pa (pa_index, 0);               // add new scores for both batches
-
-					lk_ratio        = exp(log_score - next_log_score);
-					if (lk_ratio >= 1. || genrand_real2() < lk_ratio) {
-						log_score = next_log_score;
-						log_scores_by_pa.Store (pa_index, 0, next_log_score_by_pa (pa_index,0) );
-						log_scores_by_pa.Store (pa_indices.lData[row], 0, next_log_score_by_pa (pa_indices.lData[row],0) ); // contains the old index
-
-						pa_indices.lData[row] = pa_index;   // replace old pa index with new
-					} else {
-						// revert to previous state
-						data_deep_copy.Store (row, col, parent_state);
-
-						n_ij.Store (pa_index, 0, n_ij(pa_index,0) - 1);
-						n_ij.Store (pa_indices.lData[row], 0, n_ij(pa_indices.lData[row],0) + 1);
-						pa_index = pa_indices.lData[row];
-					}
-				}
-
-				// otherwise, if parent is continuous then just update Z_bpa; case stays in the same batch
-				else {
-					// random draw from Gaussian distribution centered at previous value
-					data_deep_copy.Store (row, col, (gaussDeviate() + data_deep_copy(row,col)) * observed_values(0,2));
-
-					_Matrix zbpa (n_ij(pa_index,0), k+1, false, true);
-					_Matrix yb (n_ij(pa_index,0), 1, false, true);
-
-					batch_count = 0;
-					
-					for (long obs = 0; obs < data_deep_copy.GetHDim(); obs++) {
 						if (pa_indices.lData[obs] == pa_index) {
-							zbpa.Store (batch_count, 0, 1);
-
+							zbpa.Store (batch_count, 0, 1); // intercept
 							for (long findex = 1; findex < family_size; findex++) {
-								if (node_type.lData[parents.lData[findex-1]] == 1) {
+								if (node_type.lData[parents.lData[findex-1]] == 1) {    // CG parent
 									zbpa.Store (batch_count, parents_by_nodetype.lData[findex-1], data_deep_copy(obs, findex));
 								}
 							}
-
-							yb.Store (batch_count, 0, data_deep_copy(obs, 0));
-
+							yb.Store (batch_count, 0, data_deep_copy(obs, 0));  // child node state
 							batch_count++;
 						}
 					}
+					
+					// Metropolis-Hastings
+					_Parameter	proposal_sigma	= 0.1,
+								current_p		= BottcherScore (yb, zbpa, tau_prior, mu_prior, 
+																 rho_prior(0,0), phi_prior(0,0), n_ij(pa_index,0)),
+								previous_p		= current_p,
+								current_state	= zbpa(0, col),
+								previous_state  = current_state;
+					
+					for (long step = 0; step < 1000; step++) {
+						// Gaussian proposal
+						current_state = previous_state + gaussDeviate() * sqrt(observed_values(col,2)) / 100.;
+						zbpa.Store(0, col, current_state);
+						current_p = BottcherScore (yb, zbpa, tau_prior, mu_prior, rho_prior(0,0), 
+												   phi_prior(0,0), n_ij(pa_index,0));
 
-					next_log_score_by_pa.Store (pa_index, 0, BottcherScore (yb,zbpa,tau,mu,rho,phi, (long)n_ij(pa_index,0)));
-					next_log_score = log_score - log_scores_by_pa(pa_index,0) + next_log_score_by_pa(pa_index,0);
+						_Parameter lk_ratio = exp(current_p - previous_p);
 
-					lk_ratio = exp(log_score - next_log_score);
-
-					if (lk_ratio >= 1. || genrand_real2() < lk_ratio) {
-						log_score = next_log_score;
-						log_scores_by_pa.Store (pa_index, 0, next_log_score_by_pa(pa_index,0));
-						pa_indices.lData[row] = pa_index;
-					} else {
-						data_deep_copy.Store (row, col, parent_state);
+						if (lk_ratio > 1. || genrand_real2() < lk_ratio) {
+							previous_state = current_state;
+							previous_p = current_p;
+						} else {
+							// revert to previous state
+							zbpa.Store(0, col, previous_state);
+						}
 					}
+					data_deep_copy(row, col, current_state);
 				}
 			}
 		}
 		// end loop over missing entries
 
+		
+		// compute new posterior
+		log_score = 0.;
+		for (long pa = 0; pa < num_parent_combos; pa++) {
+			if (n_ij(pa,0) == 0) {
+				continue;
+			}
+			_Matrix zbpa (n_ij(pa,0), k+1, false, true);
+			_Matrix yb (n_ij(pa,0), 1, false, true);
+			for (long batch_count = 0, obs = 0; obs < pa_indices.lLength; obs++) {
+				if (pa_indices.lData[obs] == pa) {
+					zbpa.Store (batch_count, 0, 1);
+					for (long findex = 1; findex < family_size; findex++) {
+						if (node_type.lData[parents.lData[findex-1]] == 1) {
+							zbpa.Store (batch_count, parents_by_nodetype.lData[findex-1], data_deep_copy(obs, findex));
+						}
+					}
+					yb.Store (batch_count, 0, data_deep_copy(obs, 0));
+					batch_count++;
+				}
+			}
+			log_score += BottcherScore (yb, zbpa, tau_prior, mu_prior, rho_prior(0,0), phi_prior(0,0), n_ij(pa,0));
+		}
 		
 		if (iter > impute_burnin && ((long)(iter - impute_burnin) % sampling_interval == 0) ) {
 			vector_of_scores->Store (log_score);
@@ -1792,7 +1885,6 @@ void _BayesianGraphicalModel::ComputeParameters(_Matrix * structure)
     }
 }
 #endif
-
 
 
 
