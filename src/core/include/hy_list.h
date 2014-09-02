@@ -98,6 +98,14 @@ public:
   */
   
   _hyList(const unsigned long, const PAYLOAD []);
+  
+  /**
+   * Make a copy of the argument into this object 
+   * (clear all existing content first)
+   * @param source
+   */
+
+  virtual void   Clone (const _hyList <PAYLOAD>& source);
 
   /*
       ==============================================================
@@ -146,13 +154,13 @@ public:
   */
 
   /**
-   * Clear the current list and make a copy from the argment
-   * Argument is a pointer to make it possible to overload Clone
+   * Clear the current list and make a copy from the argument
+   * Argument is a pointer to make it possible to overload CloneList
    * @param clone_from the object to clone from
    * @return None.
    */
 
-  virtual void Clone (const _hyList<PAYLOAD>* clone_from, const long = 0UL, const long = HY_LIST_INSERT_AT_END);
+  virtual void CloneList (const _hyList<PAYLOAD>* clone_from, const long = 0UL, const long = HY_LIST_INSERT_AT_END);
   
   /**
   * Retrieve the element in position index if index if positive or

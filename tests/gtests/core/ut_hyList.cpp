@@ -246,7 +246,7 @@ TYPED_TEST_P (_hyListTest, FindAddDelete) {
     list << (TypeParam) i;
   }
   
-  list2.Clone (&list);
+  list2.Clone (list);
   EXPECT_EQ(3L, list.Find (key1)) << "Failed to find the correct element";
   EXPECT_EQ(HY_NOT_FOUND, list.Find (key2)) << "Incorrectly found an element";
   EXPECT_EQ(HY_NOT_FOUND, list.FindStepping (key1, 2)) << "Incorrectly found an element during a stepping search";

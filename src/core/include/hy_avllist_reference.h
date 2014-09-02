@@ -41,20 +41,20 @@
 #ifndef _AVLLISTBASE_
 #define _AVLLISTBASE_
 //#pragma once
+
 #include <hy_avllistbase.h>
+#include <hy_list_reference.h>
 
 
 /**
- * This object implements a key:value dictionary functionality using
+ * This object implements a set functionality using
  * a balanced binary search tree.
- * @param KEYTYPE is the type used to represent keys; it must support stack copy, all pairwise comparison operations, i.e. ==, <= etc
- * @param PAYLOAD is the type which represents dictionary values; it must support stack copy and assignment (very little else is assumed)
- */
+*/
 
 
 //_____________________________________________________________________________
 template <typename KEYTYPE>
-class _AVLList : public virtual _AVLListBase<KEYTYPE>{
+class _AVLListReference : public virtual _AVLListBase<KEYTYPE>{
   
 protected:
   
@@ -63,7 +63,7 @@ protected:
    * they are tied to tre tree nodes by index, i.e. the key stored in the i-th index
    */
   
-   _hyListOrderable    <KEYTYPE>        keys;
+   _hyListReference    <KEYTYPE>        keys;
     virtual long _CompareIndexToValue (long node, KEYTYPE const & key) const ;
   
   
@@ -92,32 +92,32 @@ public:
    * Construct an empty AVLList
    */
   
-  _AVLList     (void);
+  _AVLListReference     (void);
   
   /**
    * Stack copy constructor
    */
   
-  _AVLList     (_AVLList <KEYTYPE> const & );
+  _AVLListReference     (_AVLListReference <KEYTYPE> const & );
 
   /**
    * Single item constructor
    */
   
-  _AVLList     (KEYTYPE const & );
+  _AVLListReference     (KEYTYPE const & );
   
   /**
    * List of items constructor
    */
   
-  _AVLList     (_hyList <KEYTYPE> const &);
+  _AVLListReference     (_hyListReference <KEYTYPE> const &);
 
   
   /**
    * Object destuctor
    */
   
-  virtual ~_AVLList(void);
+  virtual ~_AVLListReference(void);
   
   /**
    * Initialize a freshly created object
@@ -128,13 +128,16 @@ public:
    * Clone an existing object into this object, which has been previously initilized
    * @param source the object to clone from
    */
-  void Clone (_AVLList <KEYTYPE> const & source);
+  void Clone (_AVLListReference <KEYTYPE> const & source);
 
-  /* Return the key at a given index
-   * @param key the index
-   * @return a pointer to the key, or NULL if the index is invalid of is poitning at a vacated
-   * space
+  /* Insert a key (which is a reference) and add a reference to the reference counter
+   * @param key the key to insert
+   * @return (same as Insert); the index of the slot where the object was insterted
+   * @sa Insert
    */
+  
+  virtual long InsertReference  (KEYTYPE& key);
+
   
   virtual BaseObj *makeDynamic(void) const;
   virtual void Duplicate(BaseObj const * ref);
@@ -149,81 +152,81 @@ public:
 
 
 template <typename KEYTYPE>
-_AVLList<KEYTYPE>::_AVLList(void):_AVLListBase<KEYTYPE> () {
+_AVLListReference<KEYTYPE>::_AVLListReference(void):_AVLListBase<KEYTYPE> () {
   this->Initialize();
 }
 
 template <typename KEYTYPE>
-_AVLList<KEYTYPE>::_AVLList(_AVLList<KEYTYPE> const & source):_AVLListBase<KEYTYPE> (source) {
+_AVLListReference<KEYTYPE>::_AVLListReference(_AVLListReference<KEYTYPE> const & source):_AVLListBase<KEYTYPE> (source) {
   this->Clone (source);
 }
 
 template <typename KEYTYPE>
-_AVLList<KEYTYPE>::_AVLList(KEYTYPE const & item) {
+_AVLListReference<KEYTYPE>::_AVLListReference(KEYTYPE const & item) {
   this->Initialize();
   this->Insert (item);
 }
 
 template <typename KEYTYPE>
-_AVLList<KEYTYPE>::_AVLList(_hyList<KEYTYPE> const & items) {
+_AVLListReference<KEYTYPE>::_AVLListReference(_hyListReference<KEYTYPE> const & items) {
   this->Initialize();
   for (unsigned long k = 0UL; k < items.Length(); k+=1) {
-    this->Insert (items.AtIndex (k));
+    this->InsertReference (items(k));
   }
 }
 
 
 //*************** INITIALIZER and CLONER ***************//
 template <typename KEYTYPE>
-void _AVLList<KEYTYPE>::Clone(_AVLList<KEYTYPE> const & source) {
+void _AVLListReference<KEYTYPE>::Clone(_AVLListReference<KEYTYPE> const & source) {
   this->_AVLListBase<KEYTYPE>::Clone (source);
-  this->keys.Clone (source.keys);
+  this->keys.Clone (&source.keys); // this should break, eh?
 }
 
 template <typename KEYTYPE>
-void _AVLList<KEYTYPE>::Initialize(bool) {
+void _AVLListReference<KEYTYPE>::Initialize(bool) {
 }
 
 
 //*************** DESTRUCTOR ***************//
 
 template <typename KEYTYPE>
-_AVLList<KEYTYPE>::~_AVLList(void) {
+_AVLListReference<KEYTYPE>::~_AVLListReference(void) {
 }
 
 //*************** REQUIRED FUNCTION DEFINITIONS ***************//
 
 template <typename KEYTYPE>
-long _AVLList<KEYTYPE>::_CompareIndexToValue(long node, KEYTYPE const &key ) const {
+long _AVLListReference<KEYTYPE>::_CompareIndexToValue(long node, KEYTYPE const &key ) const {
   return -this->keys.CompareToValue (node, key);
 }
 
 template <typename KEYTYPE>
-long _AVLList<KEYTYPE>::_StoreKey(KEYTYPE const &key, long index) {
+long _AVLListReference<KEYTYPE>::_StoreKey(KEYTYPE const &key, long index) {
   index = this->_AVLListBase <KEYTYPE>::_StoreKey (key, index);
   this->keys.append_or_insert (key, index);
   return index;
 }
 
 template <typename KEYTYPE>
-void _AVLList<KEYTYPE>::_RemoveKey(long index) {
+void _AVLListReference<KEYTYPE>::_RemoveKey(long index) {
+  delete this->keys (index);
   this->_AVLListBase <KEYTYPE>::_RemoveKey (index);
-  //this->keys.Delete (index);
 }
 
 template <typename KEYTYPE>
-KEYTYPE const * _AVLList<KEYTYPE>::_AtIndex(unsigned long index) const {
+KEYTYPE const * _AVLListReference<KEYTYPE>::_AtIndex(unsigned long index) const {
   return &this->keys.AtIndex (index);
 }
 
 template <typename KEYTYPE>
-BaseObj* _AVLList<KEYTYPE>::makeDynamic(void) const {
-  return new _AVLList <KEYTYPE> (*this);
+BaseObj* _AVLListReference<KEYTYPE>::makeDynamic(void) const {
+  return new _AVLListReference <KEYTYPE> (*this);
 }
 
 template <typename KEYTYPE>
-void _AVLList<KEYTYPE>::Duplicate (BaseObj const * ref) {
-  this->Clone (*dynamic_cast<_AVLList<KEYTYPE> const *> (ref));
+void _AVLListReference<KEYTYPE>::Duplicate (BaseObj const * ref) {
+  this->Clone (*dynamic_cast<_AVLListReference<KEYTYPE> const *> (ref));
 }
 
 #endif

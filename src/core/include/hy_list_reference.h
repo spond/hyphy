@@ -87,6 +87,14 @@ public:
   * @param to Last index to copy to
   */
   _hyListReference(const _hyListReference<PAYLOAD> &, const long = 0, const long = HY_LIST_INSERT_AT_END);
+  
+  /**
+   * Make a copy of the argument into this object
+   * (clear all existing content first)
+   * +1 to all reference counters of objects in source
+   * @param source
+   */
+  virtual     void Clone (const _hyListReference<PAYLOAD> & source);
 
 
   /**

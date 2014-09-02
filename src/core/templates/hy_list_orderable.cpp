@@ -379,7 +379,7 @@ void _hyListOrderable<PAYLOAD>::DeleteDuplicates(void) {
     }
 
     if (noDups.lLength < this->lLength) {
-      this->Clone(&noDups);
+      this->Clone(noDups);
     }
   }
 }

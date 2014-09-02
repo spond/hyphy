@@ -56,6 +56,9 @@ namespace {
     _testPayload (const _testPayload& o) { data = o.data; unused = o.unused; }
     
     bool operator == (const _testPayload & o) const { return data == o.data;}
+    bool operator < (const _testPayload & o) const { return data < o.data;}
+    bool operator <= (const _testPayload & o) const { return data <= o.data;}
+    bool operator > (const _testPayload & o) const { return data > o.data;}
     
     operator unsigned long (void) {return data;}
     
@@ -88,21 +91,6 @@ namespace {
       // Code here will be called immediately after each test (right
       // before the destructor).
       
-    }
-    
-    _StringBuffer dump_to_stream_as_longs (const _hyList <DATA>& data) {
-      _StringBuffer result;
-      char buffer [256];
-      result << '[';
-      for (unsigned long item = 0UL; item < data.countitems(); item++) {
-        if (item) {
-          result << ',';
-        }
-        snprintf(buffer,255,"%lu", (unsigned long)data.AtIndex (item));
-        result << buffer;
-      }
-      result << ']';
-      return result;
     }
     
   public:
@@ -285,8 +273,8 @@ namespace {
       
       long up_to = genrand_int32() % 512;
       for (long item = 0; item < up_to; item ++) {
-        TypeParam low  = (TypeParam) genrand_int32() % 0xFFFF,
-                  high = 0xFFFFF + (TypeParam) genrand_int32() % 0xFFFFF;
+        TypeParam low  = (TypeParam) (genrand_int32() % 0xFFFF),
+                  high = (TypeParam) (0xFFFFF + (genrand_int32() % 0xFFFFF));
         
         small_values.Insert (low);
         large_values.Insert (high);
@@ -329,5 +317,5 @@ namespace {
   
 }
 
-typedef ::testing::Types<long> _hyAVLListTestTypes;
+typedef ::testing::Types<long, _testPayload> _hyAVLListTestTypes;
 INSTANTIATE_TYPED_TEST_CASE_P(_typedList, _hyAVLListTest, _hyAVLListTestTypes);

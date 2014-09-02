@@ -113,7 +113,12 @@ void _hyListReference<PAYLOAD>::AddReferenceToItems (long from, long to) {
   for (long index = from; index <= to; index++) {
     this->lData[index]->AddAReference();
   }
+}
 
+template<typename PAYLOAD>
+void _hyListReference<PAYLOAD>::Clone (const _hyListReference<PAYLOAD>& source) {
+  this->_hyList<PAYLOAD*>::Clone (source);
+  this->AddReferenceToItems();
 }
 
 /*
@@ -124,11 +129,7 @@ void _hyListReference<PAYLOAD>::AddReferenceToItems (long from, long to) {
 template<typename PAYLOAD>
 _hyListReference<PAYLOAD> const _hyListReference<PAYLOAD>::operator=(const _hyListReference<PAYLOAD>& l)
 {
-   Clear();
-   this->Clone (&l);
-   for (unsigned long item = 0UL; item < this->lLength; item++) {
-    this->lData[item]->AddAReference();
-   }
+   this->Clone (l);
    return *this;
 }
 

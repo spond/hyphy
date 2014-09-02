@@ -55,7 +55,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 template <typename PAYLOAD>
-class _hyListReferenceOrderable : public  _hyListOrderable <PAYLOAD*>, public  _hyListReference <PAYLOAD> {
+class _hyListReferenceOrderable : virtual public  _hyListOrderable <PAYLOAD*>, virtual public  _hyListReference <PAYLOAD> {
 
 public:
 

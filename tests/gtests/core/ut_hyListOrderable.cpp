@@ -209,7 +209,7 @@ TYPED_TEST_P (_hyListOrderableTest, SortingTests) {
       EXPECT_EQ (sorted (i), sort_me[i]) << "Bubble sort failed at element " << (i+1);
       EXPECT_EQ (unsorted (bubble_sort_indexer.AtIndex(i)), sort_me.AtIndex (i)) << "Sorted indices for bubble sort are incorrect at position " << i << " mapping to index " << bubble_sort_indexer.AtIndex(i);
     }
-    sort_me.Clone (&unsorted);
+    sort_me.Clone (unsorted);
     sort_me.QuickSort (0, sort_me.countitems(), &quick_sort_indexer);
     for (unsigned long i = 0UL; i < sort_me.countitems(); i++) {
       EXPECT_EQ (sorted (i), sort_me[i]) << "Quick sort failed at element " << (i+1);

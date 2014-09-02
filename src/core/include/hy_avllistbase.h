@@ -405,8 +405,8 @@ _AVLListBase<KEYTYPE>::_AVLListBase(_AVLListBase<KEYTYPE> const & source) {
 //*************** INITIALIZER and CLONER ***************//
 template <typename KEYTYPE>
 void _AVLListBase<KEYTYPE>::Clone(_AVLListBase<KEYTYPE> const & source) {
-  this->avl_structure.Clone (&source.avl_structure);
-  this->empty_slots.Clone (&source.empty_slots);
+  this->avl_structure.Clone (source.avl_structure);
+  this->empty_slots.Clone (source.empty_slots);
   this->root = source.root;
 }
 

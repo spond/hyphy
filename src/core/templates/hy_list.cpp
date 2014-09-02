@@ -72,7 +72,7 @@ _hyList<PAYLOAD>::_hyList(const PAYLOAD item) {
 template<typename PAYLOAD>
 _hyList<PAYLOAD>::_hyList(const _hyList <PAYLOAD> &l, const long from, const long to) {
   Initialize (false);
-  Clone (&l, from, to);
+  CloneList (&l, from, to);
 }
 
 // Data constructor (variable number of long constants)
@@ -137,7 +137,7 @@ template<typename PAYLOAD>
 _hyList<PAYLOAD> const _hyList<PAYLOAD>::operator=(const _hyList<PAYLOAD>& l)
 {
   Clear();
-  Clone (&l);
+  Clone (l);
   return *this;
 }
 
@@ -205,9 +205,15 @@ Methods
 ==============================================================
 */
 
+template<typename PAYLOAD>
+void _hyList<PAYLOAD>::Clone(const _hyList<PAYLOAD> & source) {
+  this->CloneList (&source);
+}
+
+
 
 template<typename PAYLOAD>
-void _hyList<PAYLOAD>::Clone(const _hyList<PAYLOAD>* clone_from, const long from, const long to) {
+void _hyList<PAYLOAD>::CloneList(const _hyList<PAYLOAD>* clone_from, const long from, const long to) {
   if (from == 0UL && to == HY_LIST_INSERT_AT_END) {
     lLength  = clone_from->lLength;
     RequestSpace (clone_from->laLength);
@@ -705,7 +711,7 @@ void _hyList<PAYLOAD>::PermuteWithReplacement(const unsigned long blockLength)
       result << lData[sample];
     }
   }
-  Clone (&result);
+  Clone (result);
 }
 
 template<typename PAYLOAD>
