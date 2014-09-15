@@ -121,7 +121,15 @@ public:
    */
    virtual long Compare(const long, const long) const;
   
-    //   virtual BaseRef makeDynamic(void) const;
+  /**
+   * Compares an element in the list to a fixed value
+   * @param i The index to compare
+   * @param value The second index to compare
+   * @return -1 if list[index] < value, 0 if ist[index] < value, or 1 if ist[index] > value
+   */
+  virtual long CompareToValue (const long item,  PAYLOAD * const & value ) const;
+
+  //   virtual BaseRef makeDynamic(void) const;
 
   
 };

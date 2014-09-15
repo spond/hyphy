@@ -112,6 +112,8 @@ namespace {
   
   
   TYPED_TEST_P (_hyAVLListReferenceTest, ConstuctorTests) {
+    _AVLListReference <TypeParam> empty;
+    ASSERT_EQ (0UL, empty.Length());
   }
   
   

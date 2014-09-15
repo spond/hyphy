@@ -84,3 +84,10 @@ long _hyListReferenceOrderable<PAYLOAD>::Compare(const long i, const long j) con
   return this->lData[i]->Compare (this->lData[j]);
 }
 
+template<typename PAYLOAD>
+long _hyListReferenceOrderable<PAYLOAD>::CompareToValue(const long i,  PAYLOAD * const & value) const {
+  
+  return this->lData[i]->Compare (value);
+}
+
+

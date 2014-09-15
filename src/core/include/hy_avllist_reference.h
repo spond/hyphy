@@ -43,7 +43,7 @@
 //#pragma once
 
 #include <hy_avllistbase.h>
-#include <hy_list_reference.h>
+#include <hy_list_reference_orderable.h>
 
 
 /**
@@ -54,7 +54,7 @@
 
 //_____________________________________________________________________________
 template <typename KEYTYPE>
-class _AVLListReference : public virtual _AVLListBase<KEYTYPE>{
+class _AVLListReference : public virtual _AVLListBase<KEYTYPE*>{
   
 protected:
   
@@ -63,8 +63,8 @@ protected:
    * they are tied to tre tree nodes by index, i.e. the key stored in the i-th index
    */
   
-   _hyListReference    <KEYTYPE>        keys;
-    virtual long _CompareIndexToValue (long node, KEYTYPE const & key) const ;
+   _hyListReferenceOrderable    <KEYTYPE>        keys;
+    virtual long _CompareIndexToValue (long node, KEYTYPE * const & key) const ;
   
   
   /**
@@ -75,14 +75,14 @@ protected:
    * @return -1 if keys[node] < key , 0 if keys[node] == key, or 1 if keys[node] > key
    */
   
-   virtual long _StoreKey   (const KEYTYPE& key, long index = HY_LIST_INSERT_AT_END);
+   virtual long _StoreKey   ( KEYTYPE * const & key, long index = HY_LIST_INSERT_AT_END);
   
   /**
    * Remove the key from 'index' (note that the tree structure is handled by the ::Delete function)
    * @param index The index to delete from (assumed to be valid)
    */
   virtual void _RemoveKey   (long index);
-  virtual KEYTYPE const * _AtIndex (const unsigned long) const;
+  virtual KEYTYPE* const * _AtIndex (const unsigned long) const;
   
   
 public:
@@ -152,12 +152,12 @@ public:
 
 
 template <typename KEYTYPE>
-_AVLListReference<KEYTYPE>::_AVLListReference(void):_AVLListBase<KEYTYPE> () {
+_AVLListReference<KEYTYPE>::_AVLListReference(void):_AVLListBase<KEYTYPE*> () {
   this->Initialize();
 }
 
 template <typename KEYTYPE>
-_AVLListReference<KEYTYPE>::_AVLListReference(_AVLListReference<KEYTYPE> const & source):_AVLListBase<KEYTYPE> (source) {
+_AVLListReference<KEYTYPE>::_AVLListReference(_AVLListReference<KEYTYPE> const & source):_AVLListBase<KEYTYPE*> (source) {
   this->Clone (source);
 }
 
@@ -179,8 +179,8 @@ _AVLListReference<KEYTYPE>::_AVLListReference(_hyListReference<KEYTYPE> const & 
 //*************** INITIALIZER and CLONER ***************//
 template <typename KEYTYPE>
 void _AVLListReference<KEYTYPE>::Clone(_AVLListReference<KEYTYPE> const & source) {
-  this->_AVLListBase<KEYTYPE>::Clone (source);
-  this->keys.Clone (&source.keys); // this should break, eh?
+  this->_AVLListBase<KEYTYPE*>::Clone (source);
+  this->keys.Clone (source.keys); // this should break, eh?
 }
 
 template <typename KEYTYPE>
@@ -197,13 +197,13 @@ _AVLListReference<KEYTYPE>::~_AVLListReference(void) {
 //*************** REQUIRED FUNCTION DEFINITIONS ***************//
 
 template <typename KEYTYPE>
-long _AVLListReference<KEYTYPE>::_CompareIndexToValue(long node, KEYTYPE const &key ) const {
+long _AVLListReference<KEYTYPE>::_CompareIndexToValue(long node, KEYTYPE * const & key ) const {
   return -this->keys.CompareToValue (node, key);
 }
 
 template <typename KEYTYPE>
-long _AVLListReference<KEYTYPE>::_StoreKey(KEYTYPE const &key, long index) {
-  index = this->_AVLListBase <KEYTYPE>::_StoreKey (key, index);
+long _AVLListReference<KEYTYPE>::_StoreKey( KEYTYPE * const & key, long index) {
+  index = this->_AVLListBase <KEYTYPE*>::_StoreKey (key, index);
   this->keys.append_or_insert (key, index);
   return index;
 }
@@ -211,12 +211,12 @@ long _AVLListReference<KEYTYPE>::_StoreKey(KEYTYPE const &key, long index) {
 template <typename KEYTYPE>
 void _AVLListReference<KEYTYPE>::_RemoveKey(long index) {
   delete this->keys (index);
-  this->_AVLListBase <KEYTYPE>::_RemoveKey (index);
+  this->_AVLListBase <KEYTYPE*>::_RemoveKey (index);
 }
 
 template <typename KEYTYPE>
-KEYTYPE const * _AVLListReference<KEYTYPE>::_AtIndex(unsigned long index) const {
-  return &this->keys.AtIndex (index);
+KEYTYPE * const * _AVLListReference<KEYTYPE>::_AtIndex(unsigned long index) const {
+  return & keys.AtIndex (index);
 }
 
 template <typename KEYTYPE>
@@ -228,5 +228,16 @@ template <typename KEYTYPE>
 void _AVLListReference<KEYTYPE>::Duplicate (BaseObj const * ref) {
   this->Clone (*dynamic_cast<_AVLListReference<KEYTYPE> const *> (ref));
 }
+
+template <typename KEYTYPE>
+long _AVLListReference<KEYTYPE>::InsertReference(KEYTYPE & item) {
+  long inserted_here = this->Insert(& item);
+  if (inserted_here >= 0) {
+    item.AddAReference();
+  }
+  return inserted_here;
+}
+
+
 
 #endif

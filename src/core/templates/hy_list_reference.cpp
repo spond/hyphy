@@ -187,8 +187,10 @@ void _hyListReference<PAYLOAD>::operator<<(const _hyListReference<PAYLOAD>& l)
 */
 
 template<typename PAYLOAD>
-bool _hyListReference<PAYLOAD>::ItemEqualToValue(unsigned long index, PAYLOAD * const & value) const {
+bool _hyListReference<PAYLOAD>::ItemEqualToValue(unsigned long index, PAYLOAD * const &  value) const {
+    //printf ("_hyListReference::ItemEqualToValue\n");
   return this->lData[index]->Equal (*value);
 }
+
 
 

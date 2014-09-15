@@ -246,7 +246,7 @@ void _hyList<PAYLOAD>::append_multiple(const PAYLOAD item, const unsigned long c
 }
 
 template<typename PAYLOAD>
-void _hyList<PAYLOAD>::append_or_insert(const PAYLOAD item, const unsigned long index) {
+void _hyList<PAYLOAD>::append_or_insert(PAYLOAD const item, const unsigned long index) {
   if (index < lLength) {
     SetItem(index, item);
   } else {
@@ -577,7 +577,7 @@ template<typename PAYLOAD>
 long _hyList<PAYLOAD>::Find(const PAYLOAD item, const long startAt) const
 {
   for (unsigned long i = startAt; i < lLength; i++) {
-    if (ItemEqualToValue (i, item)) {
+    if (this->ItemEqualToValue (i, item)) {
       return i;
     }
   }
@@ -589,7 +589,7 @@ long _hyList<PAYLOAD>::FindStepping(const PAYLOAD item, const long step,
                                     const long startAt) const
 {
   for (unsigned long i = startAt; i < lLength; i += step)
-    if (ItemEqualToValue (i, item)) {
+    if (this->ItemEqualToValue (i, item)) {
       return i;
     }
 
@@ -663,10 +663,11 @@ _hyList<PAYLOAD> *_hyList<PAYLOAD>::Subset(const unsigned long size, const bool 
 template<typename PAYLOAD>
 void _hyList<PAYLOAD>::Permute(const unsigned long blockLength)
 {
-  unsigned long blockCount = lLength / blockLength;
+
+  long blockCount = lLength / blockLength;
 
   if (blockLength > 1UL) {
-    for (unsigned long k = 0UL; k < blockCount - 1; k ++) {
+    for (long k = 0L; k < blockCount - 1L; k ++) {
       unsigned long k2 = genrand_int32() % (blockCount - k);
       if (k2) {
         k2 += k;
@@ -679,7 +680,7 @@ void _hyList<PAYLOAD>::Permute(const unsigned long blockLength)
       }
     }
   } else {
-    for (unsigned long k = 0; k < blockCount - 1; k ++) {
+    for (long k = 0L; k < blockCount - 1L; k ++) {
       unsigned long k2 = genrand_int32() % (blockCount - k);
       if (k2) {
         k2 += k;

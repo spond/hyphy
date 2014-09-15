@@ -244,14 +244,18 @@ namespace {
       long up_to = genrand_int32() % 10000;
       
       _SimpleList random_vector (up_to, 0, 1);
-      random_vector.Permute (1);
 
       for (long item = 0; item < up_to; item ++) {
         TypeParam value = (TypeParam) genrand_int32();
-        test_list.Insert (value);
-        contents << value;
+        
+        if (test_list.Insert (value) >= 0) {
+          contents << value;
+        } else {
+          random_vector.Delete (item);
+        }
       }
         
+      random_vector.Permute (1);
       for (long item = 0; item < up_to/2; item ++) {
         ASSERT_LE (0L,test_list.Delete (contents(random_vector(item)))) << "Missing key " << item << " during randomized delete";
       }

@@ -77,6 +77,7 @@ void _Site::complete(void) {
 }
 
 void _Site::duplicate(BaseRef s) {
+  this->clear();
   _StringBuffer::duplicate(s);
   ref_no = -1;
 }
