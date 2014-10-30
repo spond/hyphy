@@ -51,3 +51,14 @@ void BaseObj::toFileStr(FILE *dest) const {
   delete s;
 }
 
+//______________________________________________________________________________
+void BaseObj::DeleteObject (BaseObj * ref) {
+  if (ref) {
+    if (ref->CanFreeMe()) {
+      delete ref;
+    } else {
+      ref->RemoveAReference();
+    }
+  }
+}
+

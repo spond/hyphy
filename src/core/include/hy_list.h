@@ -207,7 +207,7 @@ public:
   * @param index the index (0-based) of the element to delete
   * @param compact_list Free allocated memory if true
   */  
-  void         Delete(const long, bool compact_list = true);
+  virtual void    Delete(const long, bool compact_list = true);
 
   virtual void    Duplicate  (BaseRefConst);
   virtual BaseRef makeDynamic(void) const;

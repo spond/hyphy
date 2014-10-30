@@ -200,6 +200,14 @@ public:
    */
   virtual bool ItemEqualToValue (unsigned long index,  PAYLOAD * const & value) const;
   
+
+  /**
+   * Drop a reference counter first, then call the base function
+   * @param index the index (0-based) of the element to delete
+   * @param compact_list Free allocated memory if true
+   */
+  virtual void    Delete(const long, bool compact_list = true);
+
 protected:
 
     /**

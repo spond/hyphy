@@ -101,11 +101,19 @@ public:
   _AVLListReference     (_AVLListReference <KEYTYPE> const & );
 
   /**
-   * Single item constructor
+   * Single item constructor; no counter reference incrementing is performed.
+   * @sa InsertReference
    */
   
-  _AVLListReference     (KEYTYPE const & );
+  _AVLListReference     ( KEYTYPE & );
   
+  /**
+   * Single item constructor; counter reference incrementing is performed.
+   * @sa InsertReference
+   */
+  
+  _AVLListReference     ( KEYTYPE * );
+
   /**
    * List of items constructor
    */
@@ -124,6 +132,12 @@ public:
    */
   void Initialize (bool = false);
   
+  /**
+   * Compare two lists for equality (i.e. do they represent the same set of keys)
+   * @param rhs The _AVLListReference to copy from
+    */
+  virtual const _AVLListReference<KEYTYPE>& operator = (_AVLListReference <KEYTYPE> const & rhs);
+
   /**
    * Clone an existing object into this object, which has been previously initilized
    * @param source the object to clone from
@@ -162,16 +176,22 @@ _AVLListReference<KEYTYPE>::_AVLListReference(_AVLListReference<KEYTYPE> const &
 }
 
 template <typename KEYTYPE>
-_AVLListReference<KEYTYPE>::_AVLListReference(KEYTYPE const & item) {
+_AVLListReference<KEYTYPE>::_AVLListReference(KEYTYPE & item) {
   this->Initialize();
-  this->Insert (item);
+  this->Insert (&item);
+}
+
+template <typename KEYTYPE>
+_AVLListReference<KEYTYPE>::_AVLListReference(KEYTYPE * item) {
+  this->Initialize();
+  this->InsertReference (*item);
 }
 
 template <typename KEYTYPE>
 _AVLListReference<KEYTYPE>::_AVLListReference(_hyListReference<KEYTYPE> const & items) {
   this->Initialize();
   for (unsigned long k = 0UL; k < items.Length(); k+=1) {
-    this->InsertReference (items(k));
+    this->InsertReference (*items(k));
   }
 }
 
@@ -179,6 +199,7 @@ _AVLListReference<KEYTYPE>::_AVLListReference(_hyListReference<KEYTYPE> const & 
 //*************** INITIALIZER and CLONER ***************//
 template <typename KEYTYPE>
 void _AVLListReference<KEYTYPE>::Clone(_AVLListReference<KEYTYPE> const & source) {
+  this->keys.Clear();
   this->_AVLListBase<KEYTYPE*>::Clone (source);
   this->keys.Clone (source.keys); // this should break, eh?
 }
@@ -193,6 +214,16 @@ void _AVLListReference<KEYTYPE>::Initialize(bool) {
 template <typename KEYTYPE>
 _AVLListReference<KEYTYPE>::~_AVLListReference(void) {
 }
+
+//*************** ASSIGNMENT OPERATOR ***************//
+
+template <typename KEYTYPE>
+const _AVLListReference<KEYTYPE>& _AVLListReference<KEYTYPE>::operator = (_AVLListReference<KEYTYPE> const & rhs) {
+  this->Clone (rhs);
+  return *this;
+}
+
+
 
 //*************** REQUIRED FUNCTION DEFINITIONS ***************//
 
@@ -210,7 +241,8 @@ long _AVLListReference<KEYTYPE>::_StoreKey( KEYTYPE * const & key, long index) {
 
 template <typename KEYTYPE>
 void _AVLListReference<KEYTYPE>::_RemoveKey(long index) {
-  delete this->keys (index);
+  BaseObj::DeleteObject(this->keys.AtIndex (index));
+  this->keys.SetItem (index, NULL);
   this->_AVLListBase <KEYTYPE*>::_RemoveKey (index);
 }
 

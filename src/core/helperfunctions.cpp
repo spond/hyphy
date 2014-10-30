@@ -340,16 +340,6 @@ void PurgeAll(bool all) {
 
 #endif
 
-//______________________________________________________________________________
-void DeleteObject(BaseRef theObject) {
-  if (theObject) {
-    if (theObject->CanFreeMe()) {
-      delete (theObject);
-    } else {
-      theObject->RemoveAReference();
-    }
-  }
-}
 
 //______________________________________________________________________________
 char *MemAllocate(const long chunk) {

@@ -191,7 +191,12 @@ TYPED_TEST_P (_hyListReferenceTest, ListManipulationTests) {
       EXPECT_NE (list2.Element (-1), test_object2) << "operator && does not make a dynamic object copy";
       EXPECT_TRUE (test_object2->SingleReference()) << "The object added by && does not have a single reference count";
    }
-   
+  
+   TypeParam * to_delete = list1 (10);
+   list1.Delete (10);
+   EXPECT_TRUE (to_delete->SingleReference()) << "list.Delete does not decrease reference counts";
+   EXPECT_EQ (list1 (10), list2 (11)) << "Failed A.delete (10) [10] == A [11]";
+  
    list4 = list1;
    list4 << list2;
    

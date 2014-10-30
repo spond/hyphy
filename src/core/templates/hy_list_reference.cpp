@@ -73,11 +73,7 @@ _hyList<PAYLOAD*> () {
 template<typename PAYLOAD>
 _hyListReference<PAYLOAD>::~_hyListReference (void) {
   for (unsigned long k = 0; k < this->lLength; k++) {
-    if (this->lData[k]->CanFreeMe()) {
-      delete this->lData[k];
-    } else {
-      this->lData[k]->RemoveAReference();
-    }
+    BaseObj::DeleteObject(this->lData[k]);
   }
 }
 
@@ -88,13 +84,17 @@ _hyListReference<PAYLOAD>::~_hyListReference (void) {
 template<typename PAYLOAD>
 void _hyListReference<PAYLOAD>::Clear (bool deallocate_memory) {
   for (unsigned long item = 0UL; item < this->lLength; item++) {
-    if (this->lData[item]->CanFreeMe()) {
-      delete this->lData[item];
-    } else {
-      this->lData[item]->RemoveAReference();
-    }
+    BaseObj::DeleteObject(this->lData[item]);
   }
   this->_hyList<PAYLOAD*>::Clear(deallocate_memory);
+}
+
+template<typename PAYLOAD>
+void _hyListReference<PAYLOAD>::Delete(const long index, bool compact_list) {
+  if (index >= 0L && (const unsigned long)index < this->lLength) {
+    BaseObj::DeleteObject(this->lData[index]);
+    this->_hyList<PAYLOAD*>::Delete (index, compact_list);
+  }
 }
 
 
@@ -129,6 +129,7 @@ void _hyListReference<PAYLOAD>::Clone (const _hyListReference<PAYLOAD>& source) 
 template<typename PAYLOAD>
 _hyListReference<PAYLOAD> const _hyListReference<PAYLOAD>::operator=(const _hyListReference<PAYLOAD>& l)
 {
+   this->Clear (false);
    this->Clone (l);
    return *this;
 }

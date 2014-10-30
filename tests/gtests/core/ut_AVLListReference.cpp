@@ -47,20 +47,6 @@
 
 namespace {
   
-  class _testPayload {
-  public:
-    
-    _testPayload (void) { data = 0UL; unused = 0UL;}
-    _testPayload (unsigned long p) { data = p; unused = 0UL; }
-    _testPayload (const _testPayload& o) { data = o.data; unused = o.unused; }
-    
-    bool operator == (const _testPayload & o) const { return data == o.data;}
-    
-    operator unsigned long (void) {return data;}
-    
-    unsigned long data, unused;
-  };
-  
   // The fixture for testing class Foo.
   template <typename DATA>
   class _hyAVLListReferenceTest : public ::testing::Test {
@@ -111,15 +97,51 @@ namespace {
   TYPED_TEST_CASE_P(_hyAVLListReferenceTest);
   
   
-  TYPED_TEST_P (_hyAVLListReferenceTest, ConstuctorTests) {
+  TYPED_TEST_P (_hyAVLListReferenceTest, CombinedTests) {
     _AVLListReference <TypeParam> empty;
-    ASSERT_EQ (0UL, empty.Length());
+    ASSERT_EQ (0UL, empty.Length()) << "An empty list has non-zero length";
+    
+    TypeParam * single_object = new TypeParam ("test string");
+    
+    _AVLListReference <TypeParam> single_item_list          (*single_object),
+                                  another_single_item_list  (single_object);
+    
+    ASSERT_FALSE (single_object->SingleReference ()) << "Incorrect reference counting in single object constructor";
+    ASSERT_EQ (single_item_list, another_single_item_list) << "A (X), B (X) did not result in A == B";
+    
+    _hyListReference<TypeParam> array_constructor_source;
+    array_constructor_source.AppendNewInstance (new TypeParam ("one"));
+    array_constructor_source.AppendNewInstance (new TypeParam ("two"));
+    array_constructor_source.AppendNewInstance (new TypeParam ("three"));
+    array_constructor_source.AppendNewInstance (new TypeParam ("five"));
+    array_constructor_source.AppendNewInstance (new TypeParam ("seven"));
+    
+    // _AVLListReference <TypeParam> list_based (array_constructor_source);
+    
+    
+     single_item_list = array_constructor_source;
+    
+     ASSERT_EQ (single_item_list.Length(), array_constructor_source.Length()) << "Dict ([a,b,...,x]) has different length than the argument list";
+    
+    _AVLListReference<TypeParam> stack_copy_list (single_item_list);
+
+    ASSERT_EQ (single_item_list, stack_copy_list) << "Dict A = Dict B did not yield A == B";
+    
+    another_single_item_list.Clone (stack_copy_list);
+    ASSERT_EQ (another_single_item_list, stack_copy_list) << "Dict A.Clone (Dict B) did not yield A == B";
+    
+    empty.Duplicate (&stack_copy_list);
+    ASSERT_EQ (empty, stack_copy_list) << "Dict A.Duplicate (Dict B) did not yield A == B";
+    
+    ASSERT_LE (0L, stack_copy_list.Delete (array_constructor_source (3))) << "Key expected to be present in a DICT is not there";
+    ASSERT_GT (0L, stack_copy_list.Delete (array_constructor_source (3))) << "Key expected NOT to be present in a DICT IS there";
+    
   }
   
   
 
   
-  REGISTER_TYPED_TEST_CASE_P (_hyAVLListReferenceTest, ConstuctorTests);
+  REGISTER_TYPED_TEST_CASE_P (_hyAVLListReferenceTest, CombinedTests);
   
 }
 

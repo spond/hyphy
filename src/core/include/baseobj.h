@@ -46,21 +46,11 @@ typedef double _Parameter;
 
 #include "defines.h"
 
-#ifdef __HEADLESS__
-#include "THyPhy.h"
-#endif
-
-#ifdef __GNUC__
-#define _hprestrict_ __restrict
-#else
-#define _hprestrict_
-#endif
-
 #include "stdio.h"
 
+//base object class
 class BaseObj {
 
-  //base object class
 private:
   long nInstances;
 
@@ -91,18 +81,18 @@ public:
   inline bool SingleReference (void)  const { return nInstances == 1; }
     // comparison functions
   
-
+  static void DeleteObject (BaseObj * ref);
 };
 
 typedef BaseObj *BaseRef;
 typedef BaseObj const * BaseRefConst;
 
 #ifdef _SLKP_USE_SSE_INTRINSICS
-#include <pmmintrin.h>
+  #include <pmmintrin.h>
 #endif
 
 #ifdef _SLKP_USE_AVX_INTRINSICS
-#include <immintrin.h>
+  #include <immintrin.h>
 #endif
 
 #endif

@@ -169,7 +169,7 @@ TYPED_TEST_P (_hyListTest, ConstuctorTests) {
   EXPECT_TRUE(partial_stack_copy == multiple_element_list) << "Failed Duplicate(list) == list";
   
   delete dynamicList1;
-  DeleteObject (dynamicList2);
+  BaseObj::DeleteObject (dynamicList2);
   
   
   

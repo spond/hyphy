@@ -259,6 +259,7 @@ namespace {
       for (long item = 0; item < up_to/2; item ++) {
         ASSERT_LE (0L,test_list.Delete (contents(random_vector(item)))) << "Missing key " << item << " during randomized delete";
       }
+      
       const char * err = test_list.ConsistencyCheck();
       ASSERT_EQ (NULL, err) << "Failed an internal avl consistency check: '" << err << "' after deleting (random order) half of the keys ";
     }
@@ -317,7 +318,7 @@ namespace {
   
   
   
-  REGISTER_TYPED_TEST_CASE_P (_hyAVLListTest, CombinedTests, ConstuctorTests, TraversalTests, InsertTests, DeleteTests);
+  REGISTER_TYPED_TEST_CASE_P (_hyAVLListTest, DeleteTests, CombinedTests, ConstuctorTests, TraversalTests, InsertTests);
   
 }
 
