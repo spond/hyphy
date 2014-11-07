@@ -153,7 +153,7 @@ public:
   virtual long InsertReference  (KEYTYPE& key);
 
   
-  virtual BaseObj *makeDynamic(void) const;
+  virtual BaseRef DeepCopy (void) const;
   virtual void Duplicate(BaseObj const * ref);
   
   
@@ -252,7 +252,7 @@ KEYTYPE * const * _AVLListReference<KEYTYPE>::_AtIndex(unsigned long index) cons
 }
 
 template <typename KEYTYPE>
-BaseObj* _AVLListReference<KEYTYPE>::makeDynamic(void) const {
+BaseObj* _AVLListReference<KEYTYPE>::DeepCopy (void) const {
   return new _AVLListReference <KEYTYPE> (*this);
 }
 

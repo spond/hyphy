@@ -66,6 +66,7 @@ protected:
   
   void          CompactList (void);
   void          ResizeList  (void);
+  virtual void  HandleItemDelete (const unsigned long index) const;
   
 
   //Methods
@@ -105,7 +106,7 @@ public:
    * @param source
    */
 
-  virtual void   Clone (const _hyList <PAYLOAD>& source);
+  void   Clone (const _hyList <PAYLOAD>& source);
 
   /*
       ==============================================================
@@ -207,10 +208,10 @@ public:
   * @param index the index (0-based) of the element to delete
   * @param compact_list Free allocated memory if true
   */  
-  virtual void    Delete(const long, bool compact_list = true);
+  void    Delete(const long, bool compact_list = true);
 
   virtual void    Duplicate  (BaseRefConst);
-  virtual BaseRef makeDynamic(void) const;
+  virtual BaseRef DeepCopy   (void) const;
 
   /**
   * Delete a sorted list of indices in a sorted list

@@ -160,7 +160,7 @@ TYPED_TEST_P (_hyListTest, ConstuctorTests) {
   EXPECT_EQ (0UL, partial_stack_copy.allocated());
   
   _hyList <TypeParam> * dynamicList1 = new _hyList<TypeParam> (multiple_element_list),
-  * dynamicList2 = dynamic_cast <_hyList<TypeParam>*> (multiple_element_list.makeDynamic());
+  * dynamicList2 = dynamic_cast <_hyList<TypeParam>*> (multiple_element_list.DeepCopy());
   
   EXPECT_TRUE(*dynamicList1 == multiple_element_list) << "Failed new (list) == list";
   EXPECT_TRUE(*dynamicList2 == multiple_element_list) << "Failed makeDynamic (list) == list";
@@ -257,7 +257,7 @@ TYPED_TEST_P (_hyListTest, FindAddDelete) {
             
   EXPECT_EQ(list.Element (9UL), e1) << "Popping last list element failed to return the right value";
   EXPECT_EQ(list.Element (8UL), e2) << "Popping last list element failed to return the right value";
-  EXPECT_EQ (list.countitems()-2, list2.countitems()) << "Popping two elements did not shoren the list by two";
+  EXPECT_EQ (list.Length()-2, list2.Length()) << "Popping two elements did not shoren the list by two";
   
   list2.Clear();
   for (unsigned long i = 0L; i < 3*HY_LIST_ALLOCATION_CHUNK; i++) {

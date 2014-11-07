@@ -55,7 +55,7 @@ class _testPayload: public BaseObj {
   _testPayload (const char* p) { data = atoi (p); }
   _testPayload (const long p) { data = p; }
   _testPayload (const _testPayload& o) { data = o.data; }
-  virtual BaseObj *makeDynamic(void) const { return new _testPayload (*this); }
+  virtual BaseObj *DeepCopy (void) const { return new _testPayload (*this); }
   virtual void Duplicate(BaseObj const * ref) { data = ((_testPayload*)ref)->data; }
   virtual bool Equal (_testPayload const& o) {return data == o.data;}
 

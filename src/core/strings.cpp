@@ -261,7 +261,7 @@ void _String::DuplicateErasing(BaseRefConst ref) {
 }
 
 //Make dynamic copy
-BaseRef _String::makeDynamic(void) const{
+BaseRef _String::DeepCopy (void) const{
   return new _String (*this);
 }
 

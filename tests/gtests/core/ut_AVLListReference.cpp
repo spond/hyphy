@@ -133,15 +133,30 @@ namespace {
     empty.Duplicate (&stack_copy_list);
     ASSERT_EQ (empty, stack_copy_list) << "Dict A.Duplicate (Dict B) did not yield A == B";
     
+    _AVLListReference<TypeParam> * deep_copy = dynamic_cast
+    <_AVLListReference<TypeParam> *>(stack_copy_list.DeepCopy());
+    
+    ASSERT_EQ (*deep_copy, stack_copy_list) << "Dict B = A.DeepCopy() did not yield A == B";
+    
+    BaseObj::DeleteObject(deep_copy);
+    
     ASSERT_LE (0L, stack_copy_list.Delete (array_constructor_source (3))) << "Key expected to be present in a DICT is not there";
     ASSERT_GT (0L, stack_copy_list.Delete (array_constructor_source (3))) << "Key expected NOT to be present in a DICT IS there";
     
   }
   
   
+  /*TYPED_TEST_P (_hyAVLListReferenceTest, LargeListTest) {
+    _AVLListReference <TypeParam> largeList;
+    
+    for (unsigned long i = 0UL; i < (1<<20); i++) {
+      largeList.Insert (new _String(_String::Random (10)));
+    }
+     
+  }*/
 
   
-  REGISTER_TYPED_TEST_CASE_P (_hyAVLListReferenceTest, CombinedTests);
+  REGISTER_TYPED_TEST_CASE_P (_hyAVLListReferenceTest, CombinedTests/*, LargeListTest*/);
   
 }
 

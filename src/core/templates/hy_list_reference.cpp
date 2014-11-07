@@ -90,13 +90,10 @@ void _hyListReference<PAYLOAD>::Clear (bool deallocate_memory) {
 }
 
 template<typename PAYLOAD>
-void _hyListReference<PAYLOAD>::Delete(const long index, bool compact_list) {
-  if (index >= 0L && (const unsigned long)index < this->lLength) {
-    BaseObj::DeleteObject(this->lData[index]);
-    this->_hyList<PAYLOAD*>::Delete (index, compact_list);
-  }
+void _hyListReference<PAYLOAD>::HandleItemDelete(const unsigned long index) const {
+  printf ("_hyListReference<PAYLOAD>::HandleItemDelete\n");
+  BaseObj::DeleteObject(this->lData[index]);
 }
-
 
 /*
  Accessor/storage functions

@@ -150,11 +150,11 @@ public:
   virtual ~_String(void);
 
   /**
-  * Returns a dynamic string of the current instance.
+  * Returns a deep copy of the current instance.
   * \n Usage: stringInstance.makeDynamic();
   * @return BaseRef
   */
-  virtual BaseRef makeDynamic(void) const;
+  virtual BaseRef DeepCopy (void) const;
 
   /**
   * Initializes _String object to 0 length and 0 s_data

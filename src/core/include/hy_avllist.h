@@ -136,7 +136,7 @@ public:
    * space
    */
   
-  virtual BaseObj *makeDynamic(void) const;
+  virtual BaseRef DeepCopy (void) const;
   virtual void Duplicate(BaseObj const * ref);
   
   
@@ -217,7 +217,7 @@ KEYTYPE const * _AVLList<KEYTYPE>::_AtIndex(unsigned long index) const {
 }
 
 template <typename KEYTYPE>
-BaseObj* _AVLList<KEYTYPE>::makeDynamic(void) const {
+BaseObj* _AVLList<KEYTYPE>::DeepCopy(void) const {
   return new _AVLList <KEYTYPE> (*this);
 }
 

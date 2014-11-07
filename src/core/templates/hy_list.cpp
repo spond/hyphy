@@ -313,6 +313,11 @@ void _hyList<PAYLOAD>::Clear(bool completeClear)
 }
 
 template<typename PAYLOAD>
+void _hyList<PAYLOAD>::HandleItemDelete(const unsigned long index) const {
+  
+}
+
+template<typename PAYLOAD>
 void _hyList<PAYLOAD>::CompactList(void)
 {
   bool do_resize = false;
@@ -373,7 +378,7 @@ void _hyList<PAYLOAD>::Initialize(bool doMemAlloc)
 }
 
 template<typename PAYLOAD>
-BaseRef _hyList<PAYLOAD>::makeDynamic(void) const
+BaseRef _hyList<PAYLOAD>::DeepCopy (void) const
 {
   _hyList <PAYLOAD> *res = new _hyList <PAYLOAD>;
   res->Duplicate(this);
@@ -404,12 +409,11 @@ void _hyList<PAYLOAD>::ResizeList(void)
 template<typename PAYLOAD>
 void _hyList<PAYLOAD>::Delete(const long index, bool compact_list)
 {
-  if (index >= 0L && (const unsigned long)index < lLength) {
+  if (index >= 0L && index < lLength) {
     lLength--;
-    if (lLength - index) {
-      for (unsigned long el = index; el < lLength; el ++)  {
-        lData[el] = lData[el+1];
-      }
+    this->HandleItemDelete (index);
+    for (unsigned long el = index; el < lLength; el ++)  {
+      lData[el] = lData[el+1];
     }
   }
   if (compact_list) {
@@ -430,6 +434,7 @@ void _hyList<PAYLOAD>::DeleteList(const _hyList<long> *indices_to_delete)
     for (unsigned long i = 0UL; i < lLength; i++) {
       if (k < del_list_length && i == (unsigned long)indices_to_delete->AtIndex(k)) {
         k++;
+        this->HandleItemDelete (i);
       } else {
         lData[i - k] = lData[i];
       }

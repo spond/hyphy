@@ -36,7 +36,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include    "hy_strings.h"
 
 
-BaseObj::BaseObj() { nInstances = 1; }
+BaseObj::BaseObj() { reference_counter = 1; }
 
 //______________________________________________________________________________
 BaseRef BaseObj::toStr(void) const { return new _String("<HyPhy Base Object>"); }

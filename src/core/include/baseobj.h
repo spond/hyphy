@@ -52,7 +52,7 @@ typedef double _Parameter;
 class BaseObj {
 
 private:
-  long nInstances;
+  long reference_counter;
 
 public:
 
@@ -66,19 +66,19 @@ public:
 
   virtual void toFileStr (FILE *) const;
 
-  virtual BaseObj *makeDynamic(void) const = 0;
+  virtual BaseObj * DeepCopy (void) const = 0;
 
-  virtual void Initialize(bool = false) { nInstances = 1L; }
+  virtual void Initialize(bool = false) { reference_counter = 1L; }
 
   virtual void Duplicate(BaseObj const * ref) = 0;
 
-  inline void AddAReference(void) { nInstances++; }
+  inline void AddAReference(void) { reference_counter++; }
 
-  inline void RemoveAReference(void) { nInstances--; }
+  inline void RemoveAReference(void) { reference_counter--; }
   
-  inline bool CanFreeMe (void)  const { return nInstances <= 1; }
+  inline bool CanFreeMe (void)  const { return reference_counter <= 1; }
   
-  inline bool SingleReference (void)  const { return nInstances == 1; }
+  inline bool SingleReference (void)  const { return reference_counter == 1; }
     // comparison functions
   
   static void DeleteObject (BaseObj * ref);
