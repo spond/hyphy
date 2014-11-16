@@ -143,7 +143,7 @@ TEST_F(_TrieTest, MethodTests)
   _String* alph = new _String("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
 
   for (long i = 0; i <= random_list_length; i++) {
-    long random_length = 16L + genrand_int32() % 128L;
+    long random_length = i+1L;
     _String* random_string = new _String(_String::Random (random_length, alph));
     random_str_list.AppendNewInstance(random_string);
     random_long_list.append(random_length);
@@ -178,13 +178,22 @@ TEST_F(_TrieTest, MethodTests)
   random_str_list.Clear();
 
 }
-  
+
+  TEST_F(_TrieTest, AlphabetTests) {
+    _String alph ("ACGT");
+    _Trie nucleotide_trie (&alph);
+    
+    EXPECT_NE (nucleotide_trie.Insert ("CACA",0), HY_TRIE_INVALID_LETTER) << "Trie disallowed inserting a valid key";
+    EXPECT_EQ (nucleotide_trie.Insert ("ACTR",0), HY_TRIE_INVALID_LETTER) << "Trie allowed inserting a key over an incorrect alphabet";
+    EXPECT_EQ (nucleotide_trie.Find("ACTR"), HY_TRIE_INVALID_LETTER) << "Trie search should have failed";
+    
+  }
+
   TEST_F(_TrieTest, LargeTrieTest) {
     _String alph ("ACGT");
     _Trie nucleotide_trie (&alph);
-    long i = 0L;
     
-    for (; i <= (1<<20L); i++) {
+    for (unsigned long i = 0UL; i <= (1<<20L); i++) {
       nucleotide_trie.Insert(_String::Random (20, &alph), i);
     }
     

@@ -227,8 +227,6 @@ TYPED_TEST_P (_hyListNumericTest, MethodTests) {
       
     }
 
- 
-
     ASSERT_EQ ( _HY_LIST_NUMERIC_INVALID_VALUE_, null_list.Element(0)) << "Failed offset of an empty list";
 
 }

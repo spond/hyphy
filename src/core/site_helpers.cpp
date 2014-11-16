@@ -1,31 +1,41 @@
 /*
-
-HyPhy - Hypothesis Testing Using Phylogenies.
-
-Copyright (C) 1997-2009
-  Sergei L Kosakovsky Pond (spond@ucsd.edu)
-  Art FY Poon              (apoon@cfenet.ubc.ca)
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-*/
+ 
+ HyPhy - Hypothesis Testing Using Phylogenies.
+ 
+ Copyright (C) 1997-now
+ Core Developers:
+ Sergei L Kosakovsky Pond (spond@ucsd.edu)
+ Art FY Poon    (apoon@cfenet.ubc.ca)
+ Steven Weaver (sweaver@ucsd.edu)
+ 
+ Module Developers:
+	Lance Hepler (nlhepler@gmail.com)
+	Martin Smith (martin.audacis@gmail.com)
+ 
+ Significant contributions from:
+ Spencer V Muse (muse@stat.ncsu.edu)
+ Simon DW Frost (sdf22@cam.ac.uk)
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a
+ copy of this software and associated documentation files (the
+ "Software"), to deal in the Software without restriction, including
+ without limitation the rights to use, copy, modify, merge, publish,
+ distribute, sublicense, and/or sell copies of the Software, and to
+ permit persons to whom the Software is furnished to do so, subject to
+ the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included
+ in all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ 
+ */
 
 #include "hy_globals.h"
 #include "helperfunctions.h"
@@ -65,106 +75,6 @@ void TrimPhylipLine(_String &CurrentLine, _DataSet &ds);
 void ProcessTree(FileState *, FILE *, _String &);
 void ReadNexusFile(FileState &fState, FILE *f, _DataSet &result);
 
-//______________________________________________________________________________
-_Site::_Site(void) : _CString(16, true) { refNo = -1; }
-
-//______________________________________________________________________________
-_Site::_Site(_String &s) : _CString(s.sLength, true) {
-  refNo = -1;
-  (*this) << &s;
-}
-
-//______________________________________________________________________________
-_Site::_Site(char s) : _CString(16, true) {
-  refNo = -1;
-  (*this) << s;
-}
-
-//______________________________________________________________________________
-_Site::_Site(long s)
-    //:_CString (1, true)
-    {
-  SetRefNo(s);
-}
-
-//______________________________________________________________________________
-_Site::~_Site(void) {}
-
-//______________________________________________________________________________
-void _Site::Complete(void) {
-  if (refNo == -1) {
-    _String::Finalize();
-  }
-
-  refNo = refNo < 0 ? -refNo : refNo;
-}
-
-//______________________________________________________________________________
-BaseRef _Site::makeDynamic(void) {
-  _Site *r = new _Site;
-  checkPointer(r);
-
-  memcpy((char *)r, (char *)this, sizeof(_Site));
-  r->nInstances = 1;
-  nInstances++;
-  return r;
-}
-
-//______________________________________________________________________________
-void _Site::Duplicate(BaseRef ref) {
-  _Site *s = (_Site *)ref;
-  sLength = s->sLength;
-  if (sData) {
-    free(sData);
-  }
-  sData = s->sData;
-  allocatedSpace = s->allocatedSpace;
-  //nInstances = ref->nInstances;
-  if (sData) {
-    /*long theLength = sLength/storageIncrement;
-    if (!sLength||sLength%storageIncrement) theLength++;
-    theLength*=storageIncrement;
-    checkPointer (sData = (char*)MemAllocate (theLength));
-    memcpy (sData, s->sData, sLength);*/
-    if (allocatedSpace) {
-      checkPointer(sData = (char *)MemAllocate(allocatedSpace * sizeof(char)));
-    } else {
-      checkPointer(sData = (char *)MemAllocate(sLength * sizeof(char)));
-    }
-    memcpy(sData, s->sData, sLength);
-  }
-  refNo = -1;
-}
-
-//______________________________________________________________________________
-void _Site::Clear(void) {
-  if (sData) {
-    free(sData);
-    sData = NULL;
-
-    //nInstances = 0;
-  }
-  allocatedSpace = 0;
-  sLength = 0;
-}
-
-//______________________________________________________________________________
-void _Site::PrepareToUse(void) {
-  if (IsCompressed()) {
-    _String *s = Decompress();
-    DuplicateErasing(s);
-    ;
-    DeleteObject(s);
-    SetDecompressed();
-  }
-}
-
-//______________________________________________________________________________
-void _Site::Archive(void) {
-  if ((!IsCompressed()) && (GetRefNo() >= 0)) {
-    BestCompress(NUCLEOTIDEALPHABET);
-  }
-}
 
 //______________________________________________________________________________
 // reading the data set file in here

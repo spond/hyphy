@@ -158,14 +158,14 @@ TEST_F(_StringBufferTest, ConstructorLengthTest)
 
 
 /******************************************/
-TEST_F(_StringBufferTest, InitializeTest)
+TEST_F(_StringBufferTest, ClearTest)
 {
   _StringBuffer test(new _String("hyphy"));
   EXPECT_STREQ("hyphy", test);
-  EXPECT_EQ(5, test.s_length);
-  test.Initialize();
+  EXPECT_EQ(5, test.Length());
+  test.Clear();
   EXPECT_STREQ(NULL, test);
-  EXPECT_EQ(0, test.s_length);
+  EXPECT_EQ(0, test.Length());
 }
 
 /******************************************/
@@ -275,7 +275,7 @@ TEST_F(_StringBufferTest, DuplicateTest)
 TEST_F(_StringBufferTest, makeDynamicTest)
 {
   _StringBuffer test("hyphy");
-  _StringBuffer* test2 = (_StringBuffer*)(test.makeDynamic());
+  _StringBuffer* test2 = (_StringBuffer*)(test.DeepCopy());
   *test2<<"hyphy";
   _StringBuffer test3(*test2);
   test3<<"hyphy";

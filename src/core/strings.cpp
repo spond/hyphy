@@ -97,9 +97,16 @@ _String::_String(void) {
   Initialize();
 }
 
-void _String::Initialize (bool) {
+void _String::Initialize (bool doMemAlloc) {
   s_length = 0UL;
   s_data = nil;
+}
+
+void _String::Clear (void) {
+  if (s_data) {
+    free (s_data);
+  }
+  _String::Initialize();
 }
 
 //Length constructor
@@ -240,24 +247,26 @@ void _String::CopyDynamicString(_String *s, bool flushMe) {
 }
 
 void _String::Duplicate(BaseRefConst ref) {
-  _String const *s = (_String const*)ref;
-  s_length = s->s_length;
+  _String::Clone (*(_String const *) ref);
+}
 
-  if (s->s_data) {
+void _String::Clone(const _String& s){
+  
+  s_length = s.s_length;
+  
+  if (s.s_data) {
     s_data = (char *)MemAllocate(s_length + 1UL);
-    memcpy(s_data, s->s_data, s_length + 1UL);
+    memcpy(s_data, s.s_data, s_length + 1UL);
   } else {
     s_data = nil;
   }
-
 }
 
-void _String::DuplicateErasing(BaseRefConst ref) {
+void _String::CloneErasing(_String const & source_object) {
   if (s_data) {
     free(s_data);
   }
-  Duplicate(ref);
-
+  _String::Clone (source_object);
 }
 
 //Make dynamic copy
@@ -324,7 +333,7 @@ void _String::operator=(const _String& s) {
   if (s_data) {
     free(s_data);
   }
-  Duplicate(&s);
+  Clone(s);
 }
 
 _Parameter _String::toNum(void) const{

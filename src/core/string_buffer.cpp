@@ -75,8 +75,12 @@ void _StringBuffer::resizeString(void) {
   }
 }
 
-void _StringBuffer::initialize(bool p) {
-  _String::Initialize(p);
+void _StringBuffer::Initialize(bool mem) {
+  sa_length = 0UL;
+}
+
+void _StringBuffer::Clear() {
+  _String::Clear();
   sa_length = 0UL;
 }
 
@@ -98,19 +102,19 @@ _StringBuffer::_StringBuffer(const unsigned long character_count)
   s_data[0] = 0;
 }
 
-_StringBuffer::_StringBuffer(const char * buffer) {
-  this->initialize();
+_StringBuffer::_StringBuffer(const char * buffer) : _String () {
+  this->Initialize();
   (*this) << buffer;
 }
 
-_StringBuffer::_StringBuffer(const _String& buffer) {
-  this->initialize();
+_StringBuffer::_StringBuffer(const _String& buffer) : _String () {
+  this->Initialize();
   (*this) << buffer;
 }
 
 // Stack copy contructor
 _StringBuffer::_StringBuffer(const _StringBuffer &s) {
-  this->duplicate(&s);
+  this->Clone(s);
 }
 
 /*
@@ -119,12 +123,12 @@ Cloners and Copiers
 ==============================================================
 */
 
-void _StringBuffer::duplicate(BaseRefConst src_obj) {
-  _String::Duplicate(src_obj);
-  sa_length = ((_StringBuffer*)src_obj)->sa_length;
+void _StringBuffer::Clone (_StringBuffer const& src_obj) {
+  this->_String::Clone (src_obj);
+  sa_length = src_obj.sa_length;
 }
 
-BaseRef _StringBuffer::makeDynamic(void) const {
+BaseRef _StringBuffer::DeepCopy (void) const {
   return new _StringBuffer(*this);
 }
 

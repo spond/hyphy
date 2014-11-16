@@ -88,10 +88,14 @@ public:
   _StringBuffer(const _String& buffer);
 
   /**
-   * Initializes _String object to 0 allocated length
-   * @param Allocate memory or not
+   * Default constructor initializer
    */
-  virtual void initialize(bool=false);
+  virtual void Initialize(bool = false);
+
+  /**
+   * Clears this object
+  */
+  virtual void Clear();
 
   virtual ~_StringBuffer(void) {};
 
@@ -100,14 +104,14 @@ public:
   * \n Usage: string_buffer_instance.makeDynamic();
   * @return BaseRef
   */
-  virtual BaseRef makeDynamic(void) const;
+  virtual BaseRef DeepCopy (void) const;
 
   /**
   * Duplicates a _StringBuffer
   * \n Usage: string_buffer.duplicate(&existing_string_buffer)
   * @param ref A pointer to the _StringBuffer to be duplicated
   */
-  virtual void duplicate(BaseRefConst);
+  void Clone (_StringBuffer const &);
 
   /**
   * Append all characters in the argument string to the buffer

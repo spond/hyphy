@@ -89,24 +89,24 @@ TEST_F(_TrieIteratorTest, MethodTests) {
   _TrieIterator the_trieiterator(the_trie);
 
   _String* result = the_trieiterator.First();
-  EXPECT_STREQ("to", *result);
+  EXPECT_STREQ("to", _String(result));
   result = the_trieiterator.Next();
-  EXPECT_STREQ("tea", *result);
+  EXPECT_STREQ("tea", _String(result));
   result = the_trieiterator.Next();
-  EXPECT_STREQ("ted", *result);
+  EXPECT_STREQ("ted", _String(result));
   result = the_trieiterator.Next();
-  EXPECT_STREQ("ten", *result);
+  EXPECT_STREQ("ten", _String(result));
   result = the_trieiterator.Next();
-  EXPECT_STREQ("inn", *result);
+  EXPECT_STREQ("inn", _String(result));
 
   result = the_trieiterator.Previous();
-  EXPECT_STREQ("ten", *result);
+  EXPECT_STREQ("ten", _String(result));
   result = the_trieiterator.Previous();
-  EXPECT_STREQ("ted", *result);
+  EXPECT_STREQ("ted", _String(result));
   result = the_trieiterator.Previous();
-  EXPECT_STREQ("tea", *result);
+  EXPECT_STREQ("tea", _String(result));
   result = the_trieiterator.Previous();
-  EXPECT_STREQ("to", *result);
+  EXPECT_STREQ("to", _String(result));
 
   result = the_trieiterator.Previous();
   EXPECT_EQ(NULL, result);
@@ -116,7 +116,7 @@ TEST_F(_TrieIteratorTest, MethodTests) {
 
 
   result = the_trieiterator.Last();
-  EXPECT_STREQ("inn", *result) << "the_trieiterator.First() should be first element of random_str_list";
+  EXPECT_STREQ("inn", _String(result)) << "the_trieiterator.First() should be first element of random_str_list";
 
   _Trie null_trie;
   _TrieIterator null_trieiterator(null_trie);

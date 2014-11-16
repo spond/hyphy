@@ -37,59 +37,65 @@
 
 */
 
-#include <site.h>
+#include "site.h"
 #include "helperfunctions.h"
 #include "errorfns.h"
 
-#include "hy_string_buffer.h"
+
 #include <string.h> // for memcpy
 
-#if !defined __UNIX__ || defined __HEADLESS__
-#include "preferences.h"
-#endif
 
 //______________________________________________________________________________
-_Site::_Site(void) : _StringBuffer(16UL) { ref_no = -1; }
+_Site::_Site(void) : _StringBuffer(16UL) { Initialize(); }
 
 //______________________________________________________________________________
-_Site::_Site(_String &s) : _StringBuffer(s.s_length) {
-  ref_no = -1;
+_Site::_Site(_String const &s ) : _StringBuffer(s.s_length) {
+  Initialize ();
   (*this) << &s;
 }
 
 //______________________________________________________________________________
 _Site::_Site(char s) : _StringBuffer(16UL) {
-  ref_no = -1;
+  Initialize();
   (*this) << s;
 }
 
 //______________________________________________________________________________
 _Site::_Site(long s) {
-  this->setRefNo(s);
+  this->SetRefNo(s);
+}
+
+  //______________________________________________________________________________
+void _Site::Initialize(bool mem) {
+  ref_no = HY_SITE_NULL_REFERENCE;
 }
 
 //______________________________________________________________________________
 _Site::~_Site(void) {}
 
 //______________________________________________________________________________
-void _Site::complete(void) {
-  ref_no = ref_no < 0 ? -ref_no : ref_no;
+void _Site::Complete(void) {
+  ref_no = ref_no < 0L ? -ref_no : ref_no;
 }
 
-void _Site::duplicate(BaseRef s) {
-  this->clear();
-  _StringBuffer::duplicate(s);
-  ref_no = -1;
+//______________________________________________________________________________
+void _Site::Clone (_Site const & source_object) {
+  this->Clear();
+  _StringBuffer::Clone(source_object);
+  ref_no = HY_SITE_NULL_REFERENCE;
+}
+
+  //______________________________________________________________________________
+void _Site::Duplicate (BaseRefConst source_object) {
+  Clone (*(_Site*)source_object);
 }
 
 //______________________________________________________________________________
 // It isn't immediately obvious that resetting the ref_no is necessary, but
 // it seems like it would be the expected behaviour
-void _Site::clear(void) {
-  if (s_data) {
-    free(s_data);
-  }
-  this->initialize();
-  ref_no = -1;
+void _Site::Clear(void) {
+  this->_StringBuffer::Clear();
+  this->_StringBuffer::Initialize();
+  this->Initialize();
 }
 

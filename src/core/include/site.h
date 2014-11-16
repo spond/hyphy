@@ -37,13 +37,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
-#ifndef _GENSITE_
-#define _GENSITE_
-//#pragma once
-#include "hy_string_buffer.h"
-#include <stdlib.h>
+#ifndef _SITE_
+#define _SITE_
 
-class _DataSetFilter;
+#define HY_SITE_NULL_REFERENCE (-1L)
+
+#include "hy_string_buffer.h"
 
 class _Site : public _StringBuffer {
 
@@ -60,7 +59,7 @@ public:
    * reference to -1, and is incomplete
    * @param s The given content of the site
    */
-  _Site(_String &);
+  _Site(_String const &);
 
   /**
    * A constructor that creates a Site object with given content, placeholder
@@ -85,24 +84,31 @@ public:
    * Mark this site as complete. Uses the sign of ref_no as a switch to do
    * so.
    */
-  void complete(void);
+  void Complete(void);
 
   /**
    * Duplicate another Site
    * @param b The Site to be duplicated. Calls StringBuffer::duplicate, also
    * copy ref_no
    */
-  void duplicate(BaseRef);
+  void Clone (_Site const & source_object);
+
+  /**
+   * Duplicate another Site
+   * @param b The Site to be duplicated. Calls StringBuffer::duplicate, also
+   * copy ref_no
+   */
+  virtual void Duplicate (BaseRefConst source_object);
 
   /**
    * Replace the StringBuffer of this site and reset the ref_no
    */
-  virtual void clear(void);
+  virtual void Clear(void);
 
   /**
    * Return the reference held by this site
    */
-  long getRefNo(void) { return ref_no < 0 ? -ref_no - 2 : ref_no - 2; }
+  long GetRefNo(void) { return ref_no < 0L ? -ref_no - 2L : ref_no - 2L; }
 
   // Complete and IsComplete are never used, but they don't make sense as
   // implemented before refactoring, where complete is when ref_no is < 0. I
@@ -110,16 +116,23 @@ public:
   /**
    * Return whether or not the site has had its Complete() called
    */
-  bool isComplete(void) { return ref_no > 0; }
+  bool IsComplete(void) { return ref_no > 0L; }
 
   /**
    * Set the reference held by this site to another site
    * @param the reference number of another site
    */
-  void setRefNo(long r) { ref_no = -r - 2; }
+  void SetRefNo(long r) { ref_no = -r - 2L; }
 
 private:
 
+  
+  /**
+   * Perform default constuctor initalizations
+   */
+
+  virtual void Initialize (bool mem = false);
+  
   /**
    * if this site contains a reference to another one
    * if ref_no is negative, then shows whether the definition of this site

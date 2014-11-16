@@ -294,7 +294,7 @@ public:
   * Initializes the list
   * @param doMemAlloc If true, perform default memory allocation
   * @return Nothing. Acts on the List object it was called from. */
-  virtual void Initialize(bool = true);
+  virtual void Initialize(bool doMemAlloc);
 
   /**
   * Insert an element at a specific point

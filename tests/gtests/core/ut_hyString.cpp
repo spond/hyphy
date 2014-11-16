@@ -144,8 +144,8 @@ TEST_F (_hyStringTest, StringConstuctorAndConverstionTests) {
   test_string->AddAReference();
   _String test_copy (test_string);
   EXPECT_TRUE (test_string->SingleReference()) << "Incorrect reference count handling for CopyDynamicString";
-  test_string->DuplicateErasing(&literal_string);
-  EXPECT_TRUE (test_string->Equal(literal_string)) << "DuplicateErasing did not correctly copy the source string";
+  test_string->CloneErasing(literal_string);
+  EXPECT_TRUE (test_string->Equal(literal_string)) << "CloneErasing did not correctly copy the source string";
   delete test_string;
   fclose(temp_file);
   

@@ -43,7 +43,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 //______________________________________________________________________________
 _Trie::_Trie(_String* alph) {
-  this->linear_list.Initialize();
+  this->linear_list.Initialize(false);
   this->setAlphabet(alph, true);
   this->linear_list.AppendNewInstance(new _hyListNumeric<long>);
   this->payload.append(0L);
@@ -138,7 +138,7 @@ long _Trie::FindNextLetter(const char letter,
     _hyListNumeric<long> *thisList = this->linear_list.Element(current_index);
     letterKey = thisList->FindStepping(letterKey, 2, 0);
 
-    if (letterKey < 0) {
+    if (letterKey < 0L) {
       return HY_TRIE_NOTFOUND;
     }
 

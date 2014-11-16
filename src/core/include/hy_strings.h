@@ -162,22 +162,40 @@ public:
   virtual void Initialize(bool = false);
 
   /**
+   * Clear the object out (deallocate memory if needed, and
+   set lentgh to 0)
+   */
+  virtual void Clear();
+
+
+  /**
+   * Duplicates a string
+   * \n Usage: Duplicate(src_object)
+   * @param ref The string to be duplicated
+   * @sa CloneErasing()
+   * @sa Clone()
+   * @sa CopyDynamicString()
+   */
+  virtual void Duplicate (BaseRefConst src_object);
+
+  /**
   * Duplicates a string
-  * \n Usage: string.Duplicate(&existing_string)
-  * @param ref A pointer to the string to be duplicated
-  * @sa DuplicateErasing()
+  * \n Usage: Clone(src_object)
+  * @param ref The string to be duplicated
+  * @sa CloneErasing()
+  * @sa Duplicate ()
   * @sa CopyDynamicString()
   */
-  virtual void Duplicate(BaseRefConst);
+  void Clone (_String const & src_object);
 
   /**
   * Erases old data and duplicates a string
   * \n Usage: string.DuplicateErasing(&existing_string)
-  * @param ref A pointer to the string to be duplicated
-  * @sa Duplicate()
+  * @param ref The string to be duplicated
+  * @sa Clone()
   * @sa CopyDynamicString()
   */
-  virtual void DuplicateErasing(BaseRefConst);
+  void CloneErasing (_String const & src_object);
 
   /**
   * Returns the character at a specified index

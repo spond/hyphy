@@ -101,7 +101,7 @@ long _TrieIterator::MoveDown(bool move_left) {
   if ( this->traversal_history.Length() ) {
 
     _hyListNumeric<long> *current_traversal_list =
-        (_hyListNumeric<long> *)this->data_source->linear_list.Element(
+        this->data_source->linear_list.AtIndex(
             this->traversal_history.Element(-2L));
 
     long current_child_index = this->traversal_history.Element(-1L);
@@ -137,7 +137,7 @@ long _TrieIterator::RollUp(bool move_left) {
 
   if (this->traversal_history.Length() > 2L) {
     _hyListNumeric<long> *current_traversal_list =
-        (_hyListNumeric<long> *)this->data_source->linear_list.Element(
+            this->data_source->linear_list.AtIndex(
             this->traversal_history.Element(-2L));
 
     if (current_traversal_list->Length()) {
@@ -174,16 +174,16 @@ long _TrieIterator::RollUp(bool move_left) {
 
 }
 
-_StringBuffer* _TrieIterator::BuildPath(void) {
+_StringBuffer * _TrieIterator::BuildPath(void) {
 
   unsigned long pathL = this->traversal_history.Length() / 2;
-  _StringBuffer *res = new _StringBuffer(pathL);
+  _StringBuffer * res = new _StringBuffer(pathL);
 
   for (unsigned long k = 0L; k < this->traversal_history.Length() - 2L; k += 2L) {
     _hyListNumeric<long> *current_list =
-        (_hyListNumeric<long> *)this->data_source->linear_list.Element(this->traversal_history[k]);
-    long current_position = this->traversal_history[k + 1];
-    (*res) << (char)this->alphabet[current_list->Element(current_position)];
+        this->data_source->linear_list.AtIndex(this->traversal_history.AtIndex(k));
+    long current_position = this->traversal_history.AtIndex (k+1);
+    (*res) << (this->alphabet.AtIndex(current_list->AtIndex(current_position)));
   }
 
   last_retrieved_index = this->traversal_history.Element(-2L);

@@ -53,8 +53,7 @@ Constructors
 
 // Does nothing
 template<typename PAYLOAD>
-_hyList<PAYLOAD>::_hyList()
-{
+_hyList<PAYLOAD>::_hyList() {
   Initialize(false);
 }
 

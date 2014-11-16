@@ -79,214 +79,108 @@ class _SiteTest : public ::testing::Test {
       // Code here will be called immediately after each test (right
       // before the destructor).
     }
+  
+  
 
     // Objects declared here can be used by all tests in the test case for Foo.
 };
 
-
+  void  DoConstructorTests (_Site& test, unsigned long exp_length, char const * val){
+      EXPECT_EQ(exp_length, test.Length());
+      EXPECT_EQ(HY_SITE_NULL_REFERENCE, test.GetRefNo());
+      EXPECT_FALSE(test.IsComplete());
+      test.SetRefNo(162L);
+      EXPECT_FALSE(test.IsComplete());
+      EXPECT_EQ(162, test.GetRefNo());
+      if (val) {
+          EXPECT_STREQ(val, test);
+      }
+      test.Complete();
+      EXPECT_TRUE(test.IsComplete());
+  }
+  
 TEST_F(_SiteTest, ConstructorsTest)
 {
   // Normal
   _String test_s("hyphy");
   _Site test(test_s);
-  EXPECT_EQ(5, test.s_length);
-  EXPECT_EQ(-1, test.getRefNo());
-  EXPECT_FALSE(test.isComplete());
-  test.setRefNo(162);
-  EXPECT_FALSE(test.isComplete());
-  EXPECT_EQ(162, test.getRefNo());
-  EXPECT_STREQ("hyphy", test);
-  test.complete();
-  EXPECT_TRUE(test.isComplete());
+  
+  DoConstructorTests (test, 5UL, "hyphy");
+  
 
-  _Site test2;
-  test2 << "hyphy";
-  EXPECT_EQ(5, test2.s_length);
-  EXPECT_EQ(-1, test2.getRefNo());
-  EXPECT_FALSE(test2.isComplete());
-  test2.setRefNo(162);
-  EXPECT_FALSE(test2.isComplete());
-  EXPECT_EQ(162, test2.getRefNo());
-  EXPECT_STREQ("hyphy", test2);
-  test2.complete();
-  EXPECT_TRUE(test2.isComplete());
+  test.Clear();
+  test << "hyphy";
+  DoConstructorTests (test, 5UL, "hyphy");
 
-  char test_c = 'h';
-  _Site test3(test_c);
-  EXPECT_EQ(1, test3.s_length);
-  EXPECT_EQ(-1, test3.getRefNo());
-  EXPECT_FALSE(test3.isComplete());
-  test3.setRefNo(162);
-  EXPECT_FALSE(test3.isComplete());
-  EXPECT_EQ(162, test3.getRefNo());
-  EXPECT_STREQ("h", test3);
-  test3.complete();
-  EXPECT_TRUE(test3.isComplete());
+  _Site test3('h');
+  DoConstructorTests (test3, 1UL, "h");
 
   long test_i = 162;
   _Site test4(test_i);
   EXPECT_EQ(0, test4.s_length);
-  EXPECT_EQ(162, test4.getRefNo());
-  EXPECT_FALSE(test4.isComplete());
-  test4.setRefNo(163);
-  EXPECT_FALSE(test4.isComplete());
-  EXPECT_EQ(163, test4.getRefNo());
-  test4.complete();
-  EXPECT_TRUE(test4.isComplete());
+  EXPECT_EQ(162, test4.GetRefNo());
+  EXPECT_FALSE(test4.IsComplete());
+  test4.SetRefNo(163);
+  EXPECT_FALSE(test4.IsComplete());
+  EXPECT_EQ(163, test4.GetRefNo());
+  test4.Complete();
+  EXPECT_TRUE(test4.IsComplete());
 }
 
 TEST_F(_SiteTest, CompleteTest)
 {
   // Normal
   _Site test;
-  EXPECT_FALSE(test.isComplete());
-  test.complete();
-  EXPECT_TRUE(test.isComplete());
-
-  _Site test1;
-  EXPECT_FALSE(test1.isComplete());
-  test1.complete();
-  EXPECT_TRUE(test1.isComplete());
-  test1.setRefNo(163);
-  EXPECT_FALSE(test1.isComplete());
-  test1.complete();
-  EXPECT_TRUE(test1.isComplete());
+  EXPECT_FALSE(test.IsComplete());
+  test.Complete();
+  EXPECT_TRUE(test.IsComplete());
+  test.SetRefNo(163);
+  EXPECT_FALSE(test.IsComplete());
+  test.Complete();
+  EXPECT_TRUE(test.IsComplete());
 }
 
 TEST_F(_SiteTest, duplicateTest)
 {
   // mod original
-  _Site test;
-  test << "hyphy";
-  EXPECT_EQ(5, test.s_length);
-  EXPECT_STREQ("hyphy", test);
-  EXPECT_EQ(-1, test.getRefNo());
-  _Site test2;
-  test2.duplicate(&test);
-  EXPECT_EQ(5, test2.s_length);
-  EXPECT_STREQ("hyphy", test2);
-  EXPECT_EQ(-1, test2.getRefNo());
-  test.setRefNo(162);
-  EXPECT_EQ(162, test.getRefNo());
-  EXPECT_EQ(-1, test2.getRefNo());
-  EXPECT_FALSE(test.isComplete());
-  EXPECT_FALSE(test2.isComplete());
-  test.complete();
-  EXPECT_TRUE(test.isComplete());
-  EXPECT_FALSE(test2.isComplete());
-  test2.complete();
-  EXPECT_TRUE(test2.isComplete());
+  _Site test (_String::Random (32)),
+        test_duplicate,
+        test_clone;
+  
+  test_clone.Clone (test);
+  EXPECT_TRUE (test == test_clone && test.GetRefNo() == test_clone.GetRefNo()) <<
+    "_Site.Clone(A) != A";
 
-  // mod duplicate
-  _Site test3;
-  test3 << "hyphy";
-  EXPECT_EQ(5, test3.s_length);
-  EXPECT_STREQ("hyphy", test3);
-  EXPECT_EQ(-1, test3.getRefNo());
-  _Site test4;
-  test4.duplicate(&test3);
-  EXPECT_EQ(5, test4.s_length);
-  EXPECT_STREQ("hyphy", test4);
-  EXPECT_EQ(-1, test4.getRefNo());
-  test4.setRefNo(162);
-  EXPECT_EQ(162, test4.getRefNo());
-  EXPECT_EQ(-1, test3.getRefNo());
-  EXPECT_FALSE(test3.isComplete());
-  EXPECT_FALSE(test4.isComplete());
-  test4.complete();
-  EXPECT_TRUE(test4.isComplete());
-  EXPECT_FALSE(test3.isComplete());
-  test3.complete();
-  EXPECT_TRUE(test4.isComplete());
+  test_duplicate.Duplicate (&test_clone);
+  EXPECT_TRUE (test_duplicate == test_clone && test_duplicate.GetRefNo() == test_clone.GetRefNo()) <<
+  "_Site.Duplicate(A) != A";
+
 }
 
 TEST_F(_SiteTest, clearTest)
 {
   // Normal
-  _Site test;
-  EXPECT_FALSE(test.isComplete());
-  test.complete();
-  EXPECT_TRUE(test.isComplete());
-  test << "hyphy";
-  EXPECT_STREQ("hyphy", test);
-  test.clear();
-  EXPECT_FALSE(test.isComplete());
-  EXPECT_EQ(-1, test.getRefNo());
-  EXPECT_STREQ(NULL, test);
+  _Site test (_String::Random (32));
+  test.Clear();
+  EXPECT_EQ (0UL, test.Length()) << "Clear (A) did not set the length of A to 0";
+  EXPECT_EQ (HY_SITE_NULL_REFERENCE, test.GetRefNo()) << "Clear (A) did not set the reference value to HY_SITE_NULL_REFERENCE";
 }
 
 TEST_F(_SiteTest, getRefNoTest)
 {
-  _Site test;
-  EXPECT_EQ(-1, test.getRefNo());
-  test << "hyphy";
-  EXPECT_EQ(-1, test.getRefNo());
-  test.complete();
-  EXPECT_EQ(-1, test.getRefNo());
-  EXPECT_TRUE(test.isComplete());
-  EXPECT_EQ(-1, test.getRefNo());
-  test.setRefNo(162);
-  EXPECT_FALSE(test.isComplete());
-  EXPECT_EQ(162, test.getRefNo());
-  test.complete();
-  EXPECT_EQ(162, test.getRefNo());
-  EXPECT_TRUE(test.isComplete());
+  _Site test ;
+  EXPECT_EQ(HY_SITE_NULL_REFERENCE, test.GetRefNo());
+  test << (_String::Random (32));
+  EXPECT_EQ(HY_SITE_NULL_REFERENCE, test.GetRefNo());
+  test.Complete();
+  EXPECT_EQ(HY_SITE_NULL_REFERENCE, test.GetRefNo());
+  test.SetRefNo(162);
+  EXPECT_EQ(162, test.GetRefNo());
+  test.Complete();
+  EXPECT_EQ(162, test.GetRefNo());
+  EXPECT_TRUE(test.IsComplete());
 }
 
-TEST_F(_SiteTest, isCompleteTest)
-{
-  _Site test;
-  EXPECT_EQ(-1, test.getRefNo());
-  test << "hyphy";
-  EXPECT_EQ(-1, test.getRefNo());
-  EXPECT_FALSE(test.isComplete());
-  test.setRefNo(162);
-  EXPECT_FALSE(test.isComplete());
-  test.complete();
-  EXPECT_TRUE(test.isComplete());
-  test.setRefNo(162);
-  EXPECT_FALSE(test.isComplete());
-  test.complete();
-  EXPECT_TRUE(test.isComplete());
-}
-
-TEST_F(_SiteTest, setRefNoTest)
-{
-  _Site test;
-  test << "hyphy";
-  // Normal use
-  EXPECT_EQ(-1, test.getRefNo());
-  EXPECT_EQ(-1, test.getRefNo());
-  EXPECT_FALSE(test.isComplete());
-  test.setRefNo(162);
-  EXPECT_EQ(162, test.getRefNo());
-  EXPECT_FALSE(test.isComplete());
-  test.complete();
-  EXPECT_EQ(162, test.getRefNo());
-  EXPECT_TRUE(test.isComplete());
-  test.setRefNo(162);
-  EXPECT_FALSE(test.isComplete());
-  EXPECT_EQ(162, test.getRefNo());
-  test.complete();
-  EXPECT_EQ(162, test.getRefNo());
-  EXPECT_TRUE(test.isComplete());
-
-  int tests[5] = {162, 2, 1, 0, -1,};
-  for (int i = 0; i < 5; i++) {
-    test.setRefNo(tests[i]);
-    EXPECT_EQ(tests[i], test.getRefNo());
-    EXPECT_FALSE(test.isComplete());
-    test.complete();
-    EXPECT_EQ(tests[i], test.getRefNo());
-    EXPECT_TRUE(test.isComplete());
-    test.setRefNo(tests[i]);
-    EXPECT_FALSE(test.isComplete());
-    EXPECT_EQ(tests[i], test.getRefNo());
-    test.complete();
-    EXPECT_EQ(tests[i], test.getRefNo());
-    EXPECT_TRUE(test.isComplete());
-  }
-}
 
 } // namespace
 
