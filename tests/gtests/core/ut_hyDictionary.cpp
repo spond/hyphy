@@ -103,6 +103,11 @@ namespace {
     
     _Dictionary <long,TypeParam> single_element (0, 42L);
     EXPECT_EQ  (1UL, single_element.Length()) << "Single-element dictionary has the wrong length";
+    
+    EXPECT_EQ (0L, single_element.FindKey (0L)) << "Key just instered not found in Dictionary";
+    EXPECT_EQ (HY_NOT_FOUND, single_element.FindKey (32L)) << "Missing key reported found in Dictionary";
+    
+    EXPECT_EQ (TypeParam(42L), *single_element.Retrieve (0L)) << "Incorrect value returned as being associted with just-instered key";
   }
   
   REGISTER_TYPED_TEST_CASE_P (_hyDictionaryTest, CombinedTestsSimpleKey);

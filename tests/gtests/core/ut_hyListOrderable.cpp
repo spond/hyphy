@@ -258,10 +258,11 @@ TYPED_TEST_P (_hyListOrderableTest, InsertionAndSearchTests) {
   _hyListOrderable <TypeParam> sorted        (6UL, array_sorted),
                                insertionTest (sorted);
   
-  TypeParam ONE  = 1L,
-  FIVE = 5L,
-  FOUR = 4L,
-  ONE27 = 127L;
+  TypeParam ZERO = 0L,
+            ONE  = 1L,
+            FIVE = 5L,
+            FOUR = 4L,
+            ONE27 = 127L;
   
   /**** BINARY FIND ****/
   
@@ -285,6 +286,9 @@ TYPED_TEST_P (_hyListOrderableTest, InsertionAndSearchTests) {
   
   EXPECT_EQ (4L, sorted.BinaryInsert (FIVE)) << "BinaryInsert did not return the correct index for 5 in the default list";
   EXPECT_EQ (6UL, sorted.countitems ())      << "BinaryInsert inserted an already exsiting element into the default list";
+  sorted.BinaryInsert (ZERO);
+  ASSERT_EQ (true, sorted.IsSorted ()) << "BinaryInsert failed to maintain sortedness (inserting 0)"
+   << this->dump_to_stream_as_longs (sorted).getStr();
 
   for (unsigned long iterations = 0UL; iterations < 1024UL; iterations ++) {
     _hyListOrderable <TypeParam> random_list (this->make_random_list (genrand_int32() % 64, 120,5));
@@ -293,10 +297,12 @@ TYPED_TEST_P (_hyListOrderableTest, InsertionAndSearchTests) {
         << this->dump_to_stream_as_longs (random_list).getStr();
     
     unsigned long previous_length = random_list.countitems();
-    ASSERT_EQ (0L, random_list.BinaryInsert (ONE)) << "Element 0 was not inserted at the start of a random list";
+    ASSERT_EQ (0L, random_list.BinaryInsert (ONE)) << "Element 1 was not inserted at the start of a random list";
+    ASSERT_EQ(true,random_list.IsSorted()) << "Binary Insert did not preserve the sortedness of a list (inserting 1)"
+        << this->dump_to_stream_as_longs (random_list).getStr();
     ASSERT_EQ (previous_length+1, random_list.BinaryInsert (ONE27)) << "Element 127 was not inserted at the end of a random list";
-    ASSERT_EQ (previous_length+2, random_list.countitems()) << "The insertion of 0 and 127 did not increase the length of a random list by 2";
-    ASSERT_EQ(true,random_list.IsSorted()) << "Binary Insert did not preserve the sortedness of a list"  
+    ASSERT_EQ (previous_length+2, random_list.countitems()) << "The insertion of 1 and 127 did not increase the length of a random list by 2";
+    ASSERT_EQ(true,random_list.IsSorted()) << "Binary Insert did not preserve the sortedness of a list (inserting 127)"  
         << this->dump_to_stream_as_longs (random_list).getStr();
   }
   
@@ -343,15 +349,15 @@ TYPED_TEST_P (_hyListOrderableTest, SetOperationTests) {
   EXPECT_EQ (evens.countitems(), all.CountCommonElements (evens)) << "CountCommonElements failed (all, evens)";
   EXPECT_EQ (odds.countitems(), odds.CountCommonElements (all)) << "CountCommonElements failed (odds, all)";
   
-  /*          
-  TypeParam array_sorted  [3] = {(TypeParam)0, (TypeParam)5, (TypeParam)8},
-            array_sorted2 [3] = {(TypeParam)5, (TypeParam)6,(TypeParam)9};
+  
+  /*TypeParam array_sorted  [2] = {(TypeParam)505, (TypeParam)532},
+            array_sorted2 [2] = {(TypeParam)511, (TypeParam)532};
             
   _hyListOrderable<long> index,
                          index2;
   
-  _hyListOrderable <TypeParam> t1        (3UL, array_sorted),
-                               t2        (3UL, array_sorted2);
+  _hyListOrderable <TypeParam> t1        (2UL, array_sorted),
+                               t2        (2UL, array_sorted2);
   
   holder.Merge (&t1,&t2,&index,&index2);
   
@@ -364,7 +370,8 @@ TYPED_TEST_P (_hyListOrderableTest, SetOperationTests) {
     printf ("index2[%ld] = %ld\n", ii, index2.Element (ii));
   }
   ASSERT_EQ (index.countitems(), t1.countitems());
-  */
+  ASSERT_EQ (holder.countitems(), 3UL);*/
+  
 
   holder.Merge (&evens, &odds);
   EXPECT_EQ (all, holder) << "MERGE failed with (evens, odds)" 

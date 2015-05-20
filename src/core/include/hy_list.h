@@ -65,9 +65,8 @@ protected:
   unsigned long lLength; //actual length
   
   void          CompactList (void);
-  void          ResizeList  (void);
   virtual void  HandleItemDelete (const unsigned long index) const;
-  
+  void          ResizeLData (const unsigned long new_size, const unsigned long old_size, const unsigned long copy_size, const long insertion_slot = HY_LIST_INSERT_AT_END);
 
   //Methods
 

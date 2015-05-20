@@ -121,7 +121,7 @@ long _hyListOrderable<PAYLOAD>::BinaryInsert(const PAYLOAD item) {
   if (pos < this->lLength && CompareToValue (pos,item) == HY_COMPARE_LESS) {
     pos++;
   }
-
+  
   this->InsertElement(item, pos);
 
   return pos >= this->lLength ? this->lLength - 1UL : pos;

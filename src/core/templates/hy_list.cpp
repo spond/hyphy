@@ -44,6 +44,8 @@
 #include "errorfns.h"
 #include "hy_string_buffer.h"
 
+#include <algorithm>
+
 
 /*
 ==============================================================
@@ -62,7 +64,8 @@ template<typename PAYLOAD>
 _hyList<PAYLOAD>::_hyList(const PAYLOAD item) {
   lLength     = 1UL;
   laLength    = HY_LIST_ALLOCATION_CHUNK;
-  lData       = (PAYLOAD *)MemAllocate(laLength * sizeof(PAYLOAD));
+  lData       = new (std::nothrow) PAYLOAD[laLength];
+              //(PAYLOAD *)MemAllocate(laLength * sizeof(PAYLOAD));
   lData[0]    = item;
 }
 
@@ -91,7 +94,7 @@ _hyList<PAYLOAD>::~_hyList(void)
 {
   if (CanFreeMe()) {
     if (lData) {
-      free(lData);
+      delete [] lData;
     }
   } else {
     RemoveAReference();
@@ -152,12 +155,14 @@ const _hyList<PAYLOAD> _hyList<PAYLOAD>::operator&(const _hyList<PAYLOAD> l)
   res.RequestSpace (combined_length);
 
   if (lData && lLength) {
-    memcpy((Ptr)res.lData, (Ptr)lData, lLength * sizeof(PAYLOAD));
+    //memcpy((Ptr)res.lData, (Ptr)lData, lLength * sizeof(PAYLOAD));
+    std::copy (lData, lData + lLength, res.lData);
   }
 
   if (l.lData && l.lLength) {
-    memcpy((Ptr)&(res.lData [lLength]), (Ptr)l.lData,
-           l.lLength * sizeof(PAYLOAD));
+    //memcpy((Ptr)&(res.lData [lLength]), (Ptr)l.lData,
+    //     l.lLength * sizeof(PAYLOAD));
+    std::copy (l.lData, l.lData + l.lLength, res.lData + lLength);
   }
 
   res.lLength = l.lLength + lLength;
@@ -217,7 +222,8 @@ void _hyList<PAYLOAD>::CloneList(const _hyList<PAYLOAD>* clone_from, const long 
     lLength  = clone_from->lLength;
     RequestSpace (clone_from->laLength);
     if (lLength) {
-      memcpy((Ptr)lData, (Ptr)clone_from->lData, lLength * sizeof(PAYLOAD));
+      //memcpy((Ptr)lData, (Ptr)clone_from->lData, lLength * sizeof(PAYLOAD));
+      std::copy (clone_from->lData, clone_from->lData + lLength, lData);
     }
   } else {
     long f = from, t = to;
@@ -257,14 +263,9 @@ template<typename PAYLOAD>
 void _hyList<PAYLOAD>::RequestSpace(const unsigned long slots, bool set_length)
 {
   if (slots > laLength) {
-    laLength = (slots / HY_LIST_ALLOCATION_CHUNK + 1) * HY_LIST_ALLOCATION_CHUNK;
-    if (lData) {
-      checkPointer(lData = (PAYLOAD *)MemReallocate((Ptr)lData,
-                           laLength * sizeof(PAYLOAD)));
-    } else {
-      checkPointer(lData = (PAYLOAD *)MemAllocate(laLength * sizeof(PAYLOAD)));
-    }
+    this->ResizeLData ((slots / HY_LIST_ALLOCATION_CHUNK + 1) * HY_LIST_ALLOCATION_CHUNK, laLength, lLength);
   }
+  
   if (set_length) {
     lLength = slots;
   }
@@ -302,7 +303,7 @@ void _hyList<PAYLOAD>::Clear(bool completeClear)
     if (completeClear) {
       laLength = 0;
       if (lData) {
-        free(lData);
+        delete [] lData;
       }
       lData = nil;
     }
@@ -317,49 +318,54 @@ void _hyList<PAYLOAD>::HandleItemDelete(const unsigned long index) const {
 }
 
 template<typename PAYLOAD>
+void _hyList<PAYLOAD>::ResizeLData (const unsigned long new_size, const unsigned long old_size, const unsigned long copy_size, const long insertion_slot){
+  
+  
+  if (new_size != old_size) {
+    if (new_size > 0UL) {
+      PAYLOAD * new_buffer = new (std::nothrow) PAYLOAD [new_size];
+      checkPointer(new_buffer);
+      if (this->lData) {
+        if (copy_size > 0UL) {
+          if (copy_size > new_size) {
+            std::copy (this->lData, this->lData + new_size, new_buffer);
+          } else {
+            if (insertion_slot >= 0L && insertion_slot < copy_size) {
+              std::copy (this->lData, this->lData + insertion_slot, new_buffer);
+              std::copy (this->lData + insertion_slot, this->lData + copy_size, new_buffer + (insertion_slot + 1L));
+            } else {
+              std::copy (this->lData, this->lData + copy_size, new_buffer);
+            }
+          }
+        }
+        delete [] this->lData;
+      }
+      this->lData = new_buffer;
+    } else {
+      if (this->lData) {
+        delete [] this->lData;
+        this->lData = nil;
+      }
+    }
+    this->laLength = new_size;
+  }
+}
+
+
+template<typename PAYLOAD>
 void _hyList<PAYLOAD>::CompactList(void)
 {
-  bool do_resize = false;
-  
   long buffer_size = (laLength > (HY_LIST_ALLOCATION_CHUNK << 3)) ? laLength >> 3 : HY_LIST_ALLOCATION_CHUNK;
   
   if (laLength - lLength > buffer_size) {
-      laLength -= ((laLength - lLength) / buffer_size) * buffer_size;
-      do_resize = true;
+      this -> ResizeLData (laLength - ((laLength - lLength) / buffer_size) * buffer_size, laLength, lLength);
   }
-  
-  if (do_resize) {
-    if (laLength) {
-      lData = (PAYLOAD *)MemReallocate((Ptr)lData, laLength * sizeof(PAYLOAD));
-    } else {
-      free(lData);
-      lData = nil;
-    }
-  }
-
 }
 
 template<typename PAYLOAD>
 void _hyList<PAYLOAD>::TrimMemory(void)
 {
-  if (laLength > lLength) {
-    laLength = lLength;
-    if (laLength) {
-      if (lData) {
-        lData = (PAYLOAD *)MemReallocate((Ptr)lData, laLength * sizeof(PAYLOAD));
-      } else {
-        lData = (PAYLOAD *)MemAllocate(laLength * sizeof(PAYLOAD));
-      }
-      if (!lData) {
-        checkPointer(lData);
-      }
-    } else {
-      if (lData) {
-        free(lData);
-        lData = nil;
-      }
-    }
-  }
+  this->ResizeLData (lLength, laLength, lLength);
 }
 
 template<typename PAYLOAD>
@@ -369,7 +375,8 @@ void _hyList<PAYLOAD>::Initialize(bool doMemAlloc)
   lLength = 0UL;
   if (doMemAlloc) {
     laLength = HY_LIST_ALLOCATION_CHUNK;
-    lData    = (PAYLOAD *)MemAllocate(laLength * sizeof(PAYLOAD));
+    lData    = new (std::nothrow) PAYLOAD[laLength];
+    //(PAYLOAD *)MemAllocate(laLength * sizeof(PAYLOAD));
   } else {
     laLength = 0;
     lData    = nil;
@@ -384,25 +391,7 @@ BaseRef _hyList<PAYLOAD>::DeepCopy (void) const
   return res;
 }
 
-template<typename PAYLOAD>
-void _hyList<PAYLOAD>::ResizeList(void)
-{
-  if (lLength > laLength) {
-    unsigned long incBy = ((HY_LIST_ALLOCATION_CHUNK << 3L) > lLength) ? HY_LIST_ALLOCATION_CHUNK : (laLength >> 3L);
 
-    laLength += incBy;
-
-    if (lData) {
-      lData = (PAYLOAD *)MemReallocate((Ptr)lData, laLength * sizeof(PAYLOAD));
-    } else {
-      lData = (PAYLOAD *)MemAllocate(laLength * sizeof(PAYLOAD));
-    }
-
-    if (!lData) {
-      checkPointer(lData);
-    }
-  }
-}
 
 //Delete item at index (>=0)
 template<typename PAYLOAD>
@@ -525,8 +514,10 @@ void _hyList<PAYLOAD>::Duplicate(BaseRefConst theRef)
   laLength  = l->laLength;
   lData     = l->lData;
   if (lData) {
-    lData = (PAYLOAD *)MemAllocate(laLength * sizeof(PAYLOAD));
-    memcpy((Ptr)lData, (Ptr)l->lData, lLength * sizeof(PAYLOAD));
+    lData = new (std::nothrow) PAYLOAD[laLength];
+    //(PAYLOAD *)MemAllocate(laLength * sizeof(PAYLOAD));
+    //memcpy((Ptr)lData, (Ptr)l->lData, lLength * sizeof(PAYLOAD));
+    std::copy (l->lData, l->lData + lLength, lData);
   }
 }
 
@@ -615,26 +606,26 @@ void _hyList<PAYLOAD>::Flip()
 template<typename PAYLOAD>
 void _hyList<PAYLOAD>::InsertElement(const PAYLOAD item, const long insert_at)
 {
-
-  lLength++;
-  ResizeList();
-  
- 
-  if (insert_at == HY_LIST_INSERT_AT_END || insert_at < 0L) {
-    lData[lLength-1UL] = item;
+  bool move = false;
+  if (lLength == laLength) {
+    this->ResizeLData (laLength + (((HY_LIST_ALLOCATION_CHUNK << 3L) > lLength) ? HY_LIST_ALLOCATION_CHUNK : (laLength >> 3L)), laLength, lLength, insert_at);
   } else {
-    long insert_here = insert_at >= lLength ? lLength - 1UL : insert_at;
-    long moveThisMany = (laLength - insert_here - 1L);
-    if (moveThisMany < 32L)
-      for (long k = insert_here + moveThisMany; k > insert_here; k--) {
-        lData[k] = lData[k - 1];
-      }
-    else {
-      memmove(&lData[insert_here + 1], &lData[insert_here],
-              moveThisMany * sizeof(PAYLOAD));
-    }
-    lData[insert_here] = item;
+    move = true;
   }
+  
+  if (insert_at == HY_LIST_INSERT_AT_END || insert_at < 0L) {
+    lData[lLength] = item;
+  } else {
+    if (insert_at < lLength) {
+      if (move) {
+        std::copy_backward(lData+insert_at, lData+lLength, lData+lLength+1);
+      }
+      lData[insert_at] = item;
+    } else {
+      lData[lLength] = item;
+    }
+  }
+  lLength ++;
 
 }
 
